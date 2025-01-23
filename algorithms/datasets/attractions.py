@@ -6,7 +6,7 @@ import googlemaps
 
 
 df = pd.read_excel('attractions.xlsx')
-api_key = 'AIzaSyD9huwKJSUncoPQHtUzKl_n8PIXp_pTYhM'
+api_key = ''
 
 # Ensure the columns can work with int and string type values
 df['Rating'] = df['Rating'].astype(object)
