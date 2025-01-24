@@ -1,0 +1,26 @@
+itemId,Name,Rating,Category,Cost,Link
+0,St. Lawrence Market,4.6,"['tourist attraction, point of interest, establishment']",2.0,https://maps.google.com/?cid=14558648499821721341
+1,CN Tower,4.6,"['tourist attraction, point of interest, establishment']",,https://maps.google.com/?cid=1580157384328508801
+2,Ripley's Aquarium of Canada,4.6,"['aquarium, point of interest, establishment']",,https://maps.google.com/?cid=10209407575645757757
+3,Toronto Island Park,4.7,"['park, point of interest, establishment']",,https://maps.google.com/?cid=5390851624077167659
+4,Casa Loma,4.5,"['museum, tourist attraction, point of interest, establishment']",,https://maps.google.com/?cid=7024710250092976207
+5,Pai Northern Tai Kitchen,4.6,"['restaurant, food, point of interest, establishment']",2.0,https://maps.google.com/?cid=6870643561785559914
+6,Royal Ontario Museum,4.7,"['tourist attraction, museum, point of interest, establishment']",3.0,https://maps.google.com/?cid=14520789240037897618
+7,The Distillery Historic District,4.6,"['tourist attraction, shopping mall, point of interest, establishment']",,https://maps.google.com/?cid=10241881967959162025
+8,Little Canada,4.9,"['tourist attraction, point of interest, establishment']",,https://maps.google.com/?cid=17426472204490066424
+9,Art Gallery of Ontario,4.7,"['tourist attraction, museum, point of interest, establishment']",,https://maps.google.com/?cid=15719664235306829487
+10,Hockey Hall of Fame,4.7,"['museum, tourist attraction, point of interest, establishment']",,https://maps.google.com/?cid=18348671405043441163
+11,Toronto Zoo,4.4,"['zoo, tourist attraction, point of interest, establishment']",,https://maps.google.com/?cid=11392271285188539864
+12,Black + Blue,4.7,"['restaurant, food, bar, point of interest, establishment']",4.0,https://maps.google.com/?cid=2587947340511232540
+13,Steam Whistle Brewery,4.6,"['restaurant, food, bar, point of interest, establishment']",2.0,https://maps.google.com/?cid=2987145968680086828
+14,Toronto Public Library,4.4,"['library, point of interest, establishment']",,https://maps.google.com/?cid=8705366740364824902
+15,CF Toronto Eaton Centre,4.4,"['shopping mall, point of interest, establishment']",,https://maps.google.com/?cid=10054590163955992631
+16,Scarborough Bluffs,4.7,"['park, point of interest, establishment']",,https://maps.google.com/?cid=14460658497614910568
+17,High Park,4.7,"['park, tourist attraction, point of interest, establishment']",,https://maps.google.com/?cid=125194953633623655
+18,Royal Alexandra Theatre,4.7,"['point of interest, establishment']",,https://maps.google.com/?cid=10264776022346893320
+19,Nathan Phillips Square,4.6,"['tourist attraction, point of interest, establishment']",,https://maps.google.com/?cid=18264611188858599892
+20,Edwards Garden,4.7,"['tourist attraction, park, point of interest, establishment']",,https://maps.google.com/?cid=9622352163738371815
+21,Dundas Square,4.5,"['point of interest, establishment']",,https://maps.google.com/?cid=18132027203059742858
+22,Toronto Island Ferries,4.4,"['point of interest, establishment']",,https://maps.google.com/?cid=13449258840838394464
+
+
