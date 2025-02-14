@@ -1,0 +1,109 @@
+userId,age_group,location,job,gender,cluster
+12,4,India,Retail Manager,Male,1
+18,3,Japan,Chef,Male,4
+27,3,UK,Writer/Journalist,Female,3
+35,3,France,Construction Worker,Male,2
+79,2,Australia,Retail Manager,Female,1
+81,4,UK,Public Relations Specialist,Male,3
+85,5,Japan,Chef,Male,4
+88,2,Japan,Retired,Male,4
+97,1,India,Lawyer,Male,1
+101,5,India,Scientist/Researcher,Female,1
+102,5,India,Photographer,Male,1
+103,5,France,Writer/Journalist,Female,2
+104,3,India,Accountant,Female,1
+105,1,India,Teacher/Professor,Male,1
+106,4,India,Public Relations Specialist,Female,1
+107,5,India,Photographer,Female,1
+108,2,Germany,Marketing Specialist,Male,2
+109,2,UK,Sales Representative,Male,3
+110,3,Japan,Marketing Specialist,Male,4
+111,3,Germany,Lawyer,Male,2
+112,3,Australia,Entrepreneur,Male,3
+113,4,France,Chef,Female,4
+114,4,Japan,Accountant,Female,4
+115,1,India,Engineer,Female,1
+116,5,France,Travel Blogger/Influencer,Male,0
+117,1,Australia,Teacher/Professor,Male,2
+118,5,UK,Entrepreneur,Female,3
+119,3,Japan,Retail Manager,Female,4
+120,4,India,Software Developer,Male,1
+121,3,USA,Chef,Female,4
+122,5,USA,Retired,Male,2
+123,1,USA,Doctor/Nurse,Male,1
+124,5,India,Sales Representative,Female,1
+125,1,Australia,Lawyer,Female,1
+126,5,Germany,Retail Manager,Female,2
+127,2,UK,Travel Blogger/Influencer,Female,0
+128,2,Japan,Entrepreneur,Male,3
+129,2,Japan,Software Developer,Female,4
+130,5,Japan,Tour Guide,Female,4
+131,5,France,Doctor/Nurse,Male,2
+132,1,India,Travel Blogger/Influencer,Male,0
+133,1,India,Scientist/Researcher,Male,1
+134,5,Australia,Retired,Female,2
+135,5,Japan,Doctor/Nurse,Female,4
+136,1,India,Tour Guide,Female,1
+137,3,France,Engineer,Male,2
+138,3,France,Marketing Specialist,Female,2
+139,1,Australia,Public Relations Specialist,Female,1
+140,2,Australia,Marketing Specialist,Male,2
+141,4,India,Scientist/Researcher,Male,1
+142,1,USA,Architect,Male,1
+143,1,UK,Travel Blogger/Influencer,Male,0
+144,4,Australia,Photographer,Male,2
+145,5,UK,Retail Manager,Male,3
+146,3,Japan,Software Developer,Female,4
+147,1,UK,Writer/Journalist,Male,3
+148,4,Japan,Tour Guide,Male,4
+149,5,France,Marketing Specialist,Female,2
+150,4,Australia,Teacher/Professor,Female,2
+151,4,Japan,Lawyer,Male,4
+152,4,Germany,Lawyer,Male,2
+153,1,Germany,Teacher/Professor,Female,2
+154,5,UK,Retail Manager,Male,3
+155,2,UK,Retail Manager,Male,3
+156,2,France,Scientist/Researcher,Male,1
+157,3,France,Teacher/Professor,Male,2
+158,2,India,Construction Worker,Female,1
+159,1,Germany,Chef,Male,4
+160,1,USA,Writer/Journalist,Female,1
+161,1,Japan,Tour Guide,Male,4
+162,4,USA,Software Developer,Female,2
+163,5,USA,Lawyer,Male,2
+164,3,Japan,Doctor/Nurse,Male,4
+165,5,Australia,Marketing Specialist,Female,2
+166,4,India,Accountant,Female,1
+167,3,USA,Architect,Female,1
+168,4,India,Retail Manager,Male,1
+169,3,India,Doctor/Nurse,Male,1
+170,1,UK,Construction Worker,Female,3
+171,3,Japan,Marketing Specialist,Male,4
+172,1,India,Tour Guide,Male,1
+173,3,Japan,Lawyer,Female,4
+174,5,Germany,Retired,Female,2
+175,4,France,Sales Representative,Male,2
+176,3,USA,Writer/Journalist,Female,2
+177,5,Germany,Construction Worker,Female,2
+178,4,Germany,Sales Representative,Female,2
+179,4,Australia,Teacher/Professor,Female,2
+180,1,USA,Tour Guide,Female,1
+181,5,UK,Retired,Female,3
+182,2,Germany,Photographer,Female,2
+183,5,Australia,Entrepreneur,Female,3
+184,1,France,Accountant,Female,2
+185,5,UK,Entrepreneur,Female,3
+186,1,UK,Marketing Specialist,Male,3
+187,1,Germany,Software Developer,Male,2
+188,3,Germany,Retail Manager,Male,2
+189,5,India,Marketing Specialist,Female,1
+190,2,Australia,Lawyer,Female,1
+191,5,India,Architect,Male,1
+192,1,USA,Accountant,Male,1
+193,2,France,Scientist/Researcher,Female,1
+194,1,UK,Tour Guide,Female,3
+195,2,France,Doctor/Nurse,Female,2
+196,4,India,Sales Representative,Female,1
+197,5,Japan,Engineer,Male,4
+198,3,UK,Sales Representative,Female,3
+199,1,UK,Photographer,Male,3
