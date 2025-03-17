@@ -4,5 +4,5 @@ class User(BaseModel):
     name: str
     email: str
     password: str
-    preferences: list
-    savedPlaces: list
+    preferences: list = []
+    savedPlaces: list = []

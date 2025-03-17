@@ -16,9 +16,7 @@ MODEL_PATH = Path(__file__).parent / "content_based_model.pkl"
 
 # Load the tourism dataset
 def load_tourism_data():
-    """
-    Load tourism data from a CSV file or another source.
-    """
+
     try:
         logger.info("   Loading tourism data...")
         tourism_data = load_csv("tourist_destinations.csv")
@@ -63,26 +61,64 @@ cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
 tourism_data = tourism_data.reset_index()
 indices = pd.Series(tourism_data.index, index=tourism_data['name']).drop_duplicates()
 
-# Recommendation function
-def get_content_recommendations(item_name, n=5, cosine_sim=cosine_sim):
-    try:
-        logger.info(f"  Generating recommendations for item {item_name}...")
-        
-        if item_name not in indices:
-            return f"   No recommendations found for {item_name}"
+def filter_by_location(recommendations, location):
+    return recommendations[
+        recommendations['country'].str.contains(location, case=False, na=False)
+    ]
 
-        index = indices[item_name]
-        sim_scores = list(enumerate(cosine_sim[index]))
-        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:n+1]  # Top n similar places
-        place_indices = [i[0] for i in sim_scores]
-        
-        recommendations = tourism_data.iloc[place_indices][['name', 'category', 'country', 'itemRating']]
-        
-        logger.info(f"  Recommendations generated successfully: {recommendations}")
-        return recommendations.to_dict(orient="records")
+def filter_by_keyword(recommendations, keyword):
+    return recommendations[
+        recommendations['name'].str.contains(keyword, case=False, na=False) |
+        recommendations['category'].str.contains(keyword, case=False, na=False) |
+        recommendations['description'].str.contains(keyword, case=False, na=False)
+    ]
+
+def is_location(user_input):
+    return (
+        tourism_data['country'].str.contains(user_input, case=False, na=False).any() 
+    )
+
+def is_location_name(user_input):
+    return tourism_data['name'].str.lower().eq(user_input.lower()).any()
+
+
+# Recommendation function
+def get_content_recommendations(user_input, n, cosine_sim=cosine_sim):
+    try:
+        if user_input and is_location_name(user_input):
+            # If the input is an exact location name (e.g., "Louvre Museum"), recommend similar items
+            if user_input not in indices:
+                logger.warning(f"   No recommendations found for {user_input}.")
+                return []  # Return an empty list if no recommendations are found
+
+            index = indices[user_input]
+            sim_scores = list(enumerate(cosine_sim[index]))
+            sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:n+1]  # Exclude the input item itself
+            place_indices = [i[0] for i in sim_scores]
+            
+            recommendations = tourism_data.iloc[place_indices][['name', 'category', 'country', 'itemRating']]
+        else:
+            # If the input is not an exact location name, treat it as a keyword
+            recommendations = tourism_data.copy()
+
+            # Apply location-based filtering if the input is a location
+            if user_input and is_location(user_input):
+                recommendations = filter_by_location(recommendations, user_input)
+
+            # Apply keyword-based filtering if the input is not a location or location name
+            if user_input and not is_location(user_input) and not is_location_name(user_input):
+                keyword_filtered = filter_by_keyword(recommendations, user_input)
+                if not keyword_filtered.empty:  # Check if keyword filtering returned any results
+                    recommendations = keyword_filtered
+                else:
+                    logger.info(f"No results found for keyword '{user_input}'. Returning top-rated items.")
+                    recommendations = recommendations.head(n)  # Fallback to top-rated items
+
+        # Return the top n recommendations
+        return recommendations.head(n).to_dict(orient="records")
     except Exception as e:
-        logger.error(f" Failed to generate recommendations: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate recommendations: {e}")
+        logger.error(f" Failed to generate content-based recommendations: {e}")
+        return []  # Return an empty list if an error occurs
 
 def train_and_save_model():
     try:
