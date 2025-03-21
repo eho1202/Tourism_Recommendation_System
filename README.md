@@ -1,5 +1,7 @@
 # Recommendation System for Tourists
 
+## Requires Python `3.11` or above to run
+
 ## Python Virtual Env
 ``` 
 python -m venv venv
@@ -13,9 +15,13 @@ venv\Scripts\Activate.ps1
 $ source myvenv/bin/activate
 ```
 
-## Installing Dependencies
+## To install dependencies inside venv
 ```
-pip install -r requirements.txt
+# Linux or MacOS
+$ python3 -m pip install -r requirements.txt
+
+# Windows
+py -m pip install -r requirements.txt
 ```
 
 ## Running FastAPI
