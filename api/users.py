@@ -31,7 +31,7 @@ def create_access_token(data: dict, expires_delta: timedelta=None): # type: igno
 
 @users_router.post("/auth/login")
 async def login(user: User):
-    is_user_exist = get_user(user.email)
+    is_user_exist = await get_user(user.email)
     if not is_user_exist or not pwd_context.verify(user.password, is_user_exist['password']):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     access_token = create_access_token(data={"sub": user.email})
@@ -42,22 +42,26 @@ async def register_user(user: User):
     is_user_exist = get_user(user.email)
     if is_user_exist:
         raise HTTPException(status_code=403, detail="User already exists")
+    
     # Grab the userId of the last user
-    last_user = get_last_user()
+    last_user = await get_last_user()
     if last_user:
         user.userId = last_user['userId'] + 1
+    
+    # Hash the password
     user.password = hash_password(user.password)
+    
     new_user = add_user(user)
     return new_user
 
-@users_router.post("/users/remove-user")
+@users_router.post("/users/remove-user/{user_id}")
 async def remove_user(user_id: int):
     result = delete_user(user_id)
     return result
 
-@users_router.get("/users/get-user-info", response_model=User)
+@users_router.get("/users/get-user-info/{user_id}", response_model=User)
 async def get_user_info(user_id: int):
-    user = get_user_id(user_id)
+    user = await get_user_id(user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return user

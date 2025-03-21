@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 import os
 import logging
+import motor.motor_asyncio as motor
 
 from dotenv import load_dotenv
 
@@ -16,7 +17,7 @@ DB_PASSWORD = os.getenv('DB_PASSWORD_USERS')
 USER_MONGO_URI = os.getenv('USER_MONGO_URI')
 MONGO_URI = f"mongodb+srv://{DB_USERNAME}:{DB_PASSWORD}@{USER_MONGO_URI}"
 
-client = MongoClient(MONGO_URI)
+client = motor.AsyncIOMotorClient(MONGO_URI)
 
 user_db = client["users_db"]
 recommender_db = client["recommender_system"]
