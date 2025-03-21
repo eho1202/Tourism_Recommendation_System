@@ -1,8 +1,11 @@
-# Recommendation System for Tourists
+# COE70A/B Recommendation System for Tourists
+Software Engineering Capstone Project for Toronto Metropolitan University 2025
 
-## Requires Python `3.11` or above to run
+## Project Setup
 
-## Python Virtual Env
+### Requires Python `3.11` or above to run
+
+### Python Virtual Env
 ``` 
 python -m venv venv
 
@@ -15,7 +18,7 @@ venv\Scripts\Activate.ps1
 $ source myvenv/bin/activate
 ```
 
-## To install dependencies inside venv
+### To install dependencies inside venv
 ```
 # Linux or MacOS
 $ python3 -m pip install -r requirements.txt
@@ -24,8 +27,13 @@ $ python3 -m pip install -r requirements.txt
 py -m pip install -r requirements.txt
 ```
 
-## Running FastAPI
+## Running FastAPI locally
 Once all the dependencies are installed, run this command
 ```
 uvicorn main:app --reload
 ```
+
+### Notes
+[Github Markdown Cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)  
+[Pymongo vs. Motor](https://gist.github.com/anand2312/840aeb3e98c3d7dbb3db8b757c1a7ace)  
+
