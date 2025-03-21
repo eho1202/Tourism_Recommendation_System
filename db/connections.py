@@ -18,5 +18,5 @@ MONGO_URI = f"mongodb+srv://{DB_USERNAME}:{DB_PASSWORD}@{USER_MONGO_URI}"
 
 client = MongoClient(MONGO_URI)
 
-user_db = client["test"]
+user_db = client["users_db"]
 recommender_db = client["recommender_system"]

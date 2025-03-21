@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from db.recommender_db import get_ratings
+from db.recommender_db import get_user_ratings # type: ignore
 from models.recommendations import Rating, Recommendations
 from typing import List, Optional
 
@@ -7,16 +7,16 @@ from algorithms import hybrid_recommender
 
 recommendations_router = APIRouter()
 
-@recommendations_router.get("/ratings", response_model=List[Rating])
-async def get_all_ratings():
-    ratings = get_ratings()
+@recommendations_router.get("/get-user-ratings", response_model=List[Rating])
+def fetch_user_ratings(user_id: int):
+    ratings = get_user_ratings(user_id)
     if not ratings:
         raise HTTPException(status_code=404, detail="No ratings found")
     return ratings
 
 @recommendations_router.get("/recommendations", response_model=List[Recommendations])
-def get_recommendations(user_id: int, item_name: str | None = None, n: int = 5):
-    recommendations = hybrid_recommender(user_id, item_name, n) # type: ignore
+def fetch_recommendations(user_id: int, user_input: str | None = None, n: int = 10):
+    recommendations = hybrid_recommender(user_id, user_input, n) # type: ignore
     return recommendations
 
 # @app.get("/recommend", method=['GET'])

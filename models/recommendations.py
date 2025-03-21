@@ -2,8 +2,8 @@ from pydantic import BaseModel
 from typing import List
 
 class Rating(BaseModel):
-    user_id: int
-    item_name: str
+    userId: int
+    itemId: int
     rating: int
 
 class Recommendations(BaseModel):
