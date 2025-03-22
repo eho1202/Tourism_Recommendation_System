@@ -1,17 +1,17 @@
 import os
 import jwt
 from datetime import datetime, timedelta
-from fastapi import APIRouter, HTTPException, Depends, status
-from fastapi.responses import RedirectResponse,HTMLResponse
-from fastapi.security import OAuth2PasswordRequestForm
-from fastapi_login import LoginManager
-from fastapi_login.exceptions import InvalidCredentialsException
+from fastapi import APIRouter, HTTPException
 from passlib.context import CryptContext
 
-from db.user_db import get_user, add_user, get_last_user, delete_user, get_user_id
-from models.users import User
+from db.user_db import get_user, add_user, get_last_user, delete_user, get_user_id, update_user
+from models.users import UserModel, UserResponseModel
 
-users_router = APIRouter()
+users_router = APIRouter(
+    prefix="/users",
+    tags=["users"],
+    responses={404: {"description": "User does not exist."}},
+)
 
 SECRET_KEY = os.urandom(16)
 
@@ -30,7 +30,7 @@ def create_access_token(data: dict, expires_delta: timedelta=None): # type: igno
     return jwt.encode(to_encode, SECRET_KEY, algorithm="HS256")
 
 @users_router.post("/auth/login")
-async def login(user: User):
+async def login(user: UserModel):
     is_user_exist = await get_user(user.email)
     if not is_user_exist or not pwd_context.verify(user.password, is_user_exist['password']):
         raise HTTPException(status_code=400, detail="Invalid credentials")
@@ -38,7 +38,7 @@ async def login(user: User):
     return {'access_token': access_token, 'token_type': 'bearer'}
     
 @users_router.post("/auth/register")
-async def register_user(user: User):
+async def register_user(user: UserModel):
     is_user_exist = get_user(user.email)
     if is_user_exist:
         raise HTTPException(status_code=403, detail="User already exists")
@@ -54,19 +54,21 @@ async def register_user(user: User):
     new_user = add_user(user)
     return new_user
 
-@users_router.post("/users/remove-user/{user_id}")
-async def remove_user(user_id: int):
-    result = delete_user(user_id)
-    return result
-
-@users_router.get("/users/get-user-info/{user_id}", response_model=User)
+@users_router.get("/get-user-details/{user_id}", response_model=UserModel)
 async def get_user_info(user_id: int):
     user = await get_user_id(user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-# TODO: Add endpoint to allow user to save destinations
-# @users_router.post("/users/append-saved-places")
-# async def append_place(user_id: int, saved_places):
-    
+@users_router.put("/{user_id}", response_model=UserResponseModel)
+async def update_user_details(user_id: int, user: UserModel):
+    result = await update_user(user_id, user)
+    if result is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return result
+
+@users_router.delete("/remove-user/{user_id}")
+async def remove_user(user_id: int):
+    result = delete_user(user_id)
+    return result

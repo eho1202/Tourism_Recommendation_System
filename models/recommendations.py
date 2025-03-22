@@ -1,12 +1,11 @@
 from pydantic import BaseModel
-from typing import List
 
-class Rating(BaseModel):
+class RatingModel(BaseModel):
     userId: int
     itemId: int
     rating: int
 
-class Recommendations(BaseModel):
+class RecommendationsModel(BaseModel):
     name: str
     category: str
     country: str

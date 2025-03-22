@@ -1,3 +1,3 @@
 from .locations import Location
-from .recommendations import Rating
-from .users import User
+from .recommendations import RatingModel, RecommendationsModel
+from .users import UserModel

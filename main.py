@@ -1,6 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from api import recommendations_router, users_router
 from algorithms.collaborative_filter import fetch_and_process_ratings as fetch_cf_ratings
@@ -26,5 +27,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Social Network based Recommender System for Tourists", lifespan=lifespan)
 
-app.include_router(recommendations_router, prefix="/api")
-app.include_router(users_router, prefix="/api")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=True,
+    allow_methods=["*"], 
+    allow_headers=["*"], 
+)
+
+app.include_router(recommendations_router)
+app.include_router(users_router)
