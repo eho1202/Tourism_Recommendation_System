@@ -19,7 +19,10 @@ logger = logging.getLogger(__name__)
 MODEL_PATH = Path(__file__).parent / "collaborative_filter_model.pkl"
 
 ratings = pd.DataFrame()
-data = any
+reader = Reader(rating_scale=(1, 5))
+sim_options = {'name': 'cosine', 'user_based': False} # Item-based collaborative filtering
+algo = KNNBasic(sim_options=sim_options)
+tourism_data = pd.DataFrame()
 
 def load_tourism_data():
     """
@@ -38,25 +41,12 @@ def load_tourism_data():
     except Exception as e:
         logger.error(f" Failed to load tourism data: {e}")
         raise HTTPException(status_code=500, detail=f"  Failed to load tourism data: {e}")
-    
-tourism_data = load_tourism_data()
-
 
 # Load ratings data into Surprise Dataset
 async def fetch_and_process_ratings():
-    global ratings, data
+    global ratings
     ratings = pd.DataFrame(await get_ratings())
-    data = Dataset.load_from_df(ratings[['userId', 'itemId', 'rating']].copy(), reader)
-
-# Define the reader object with no rating scale specified (auto-detected)
-reader = Reader(rating_scale=(1, 5))
-
-# Use KNNBasic algorithm for item-based collaborative filtering
-sim_options = {
-    'name': 'cosine',
-    'user_based': False  # Item-based collaborative filtering
-}
-algo = KNNBasic(sim_options=sim_options)
+    return ratings
 
 def filter_by_location(recommendations, location):
     return recommendations[
@@ -141,11 +131,13 @@ def get_item_recommendations(item_id, n):
         raise HTTPException(status_code=500, detail=f"Failed to generate recommendations: {e}")
 
 def train_and_save_model():
-    global algo
+    global algo, data
+    logger.info(ratings)
     try:
         logger.info("   Training the collaborative filtering model...")
         
         # Train the model
+        data = Dataset.load_from_df(ratings[['userId', 'itemId', 'rating']].copy(), reader)
         trainset = data.build_full_trainset()
         algo.fit(trainset)
         
@@ -168,8 +160,6 @@ def load_model():
     except Exception as e:
         logger.error(f" Failed to load model: {e}")
         raise HTTPException(status_code=500, detail=f"  Failed to load the model: {e}")
-
-load_model()
 
 # item_id = 8  # Replace with an actual item ID
 # recommendations = get_item_recommendations(item_id, 5)

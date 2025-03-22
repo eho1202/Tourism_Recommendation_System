@@ -14,9 +14,16 @@ logger = logging.getLogger(__name__)
 
 MODEL_PATH = Path(__file__).parent / "content_based_model.pkl"
 
+# Initialize variables as None
+tourism_data = None
+tfidf = None
+tfidf_matrix = None
+keywords_list = None
+cosine_sim = None
+indices = None
+
 # Load the tourism dataset
 def load_tourism_data():
-
     try:
         logger.info("   Loading tourism data...")
         tourism_data = load_csv("tourist_destinations.csv")
@@ -33,40 +40,58 @@ def load_tourism_data():
 
 # Function to extract keywords from description
 def extract_keywords(text):
+    if keywords_list is None:
+        raise HTTPException(status_code=500, detail="Keywords list not initialized")
     return ', '.join([word for word in text.split() if word in keywords_list])
 
+async def initialize():
+    """
+    Initialize the content-based filtering module.
+    """
+    global tourism_data, tfidf, tfidf_matrix, keywords_list, cosine_sim, indices
 
-tourism_data = load_tourism_data()
+    try:
+        # Load tourism data
+        tourism_data = load_tourism_data()
 
-# Initialize TF-IDF Vectorizer for keyword extraction
-tfidf = TfidfVectorizer(stop_words='english', max_features=10)  # Extract top 10 keywords
-tfidf_matrix = tfidf.fit_transform(tourism_data['description'])
+        # Initialize TF-IDF Vectorizer for keyword extraction
+        tfidf = TfidfVectorizer(stop_words='english', max_features=10)  # Extract top 10 keywords
+        tfidf_matrix = tfidf.fit_transform(tourism_data['description'])
 
-# Get feature names (keywords)
-keywords_list = tfidf.get_feature_names_out()
+        # Get feature names (keywords)
+        keywords_list = tfidf.get_feature_names_out()
 
-# Create 'keywords' column
-tourism_data['keywords'] = tourism_data['description'].apply(extract_keywords)
+        # Create 'keywords' column
+        tourism_data['keywords'] = tourism_data['description'].apply(extract_keywords)
 
-# Create metadata column for content-based filtering
-tourism_data['metadata'] = tourism_data['name'] + ' ' + tourism_data['category'] + ' ' + tourism_data['keywords']
+        # Create metadata column for content-based filtering
+        tourism_data['metadata'] = tourism_data['name'] + ' ' + tourism_data['category'] + ' ' + tourism_data['keywords']
 
-# Apply TF-IDF to metadata
-tfidf_matrix = TfidfVectorizer(stop_words='english').fit_transform(tourism_data['metadata'])
+        # Apply TF-IDF to metadata
+        tfidf_matrix = TfidfVectorizer(stop_words='english').fit_transform(tourism_data['metadata'])
 
-# Compute cosine similarity
-cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
+        # Compute cosine similarity
+        cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
 
-# Reset index for lookup
-tourism_data = tourism_data.reset_index()
-indices = pd.Series(tourism_data.index, index=tourism_data['name']).drop_duplicates()
+        # Reset index for lookup
+        tourism_data = tourism_data.reset_index()
+        indices = pd.Series(tourism_data.index, index=tourism_data['name']).drop_duplicates()
+
+        logger.info("   Content-based filtering module initialized successfully.")
+    except Exception as e:
+        logger.error(f" Failed to initialize content-based filtering module: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to initialize module: {e}")
 
 def filter_by_location(recommendations, location):
+    if tourism_data is None:
+        raise HTTPException(status_code=500, detail="Tourism data not loaded")
     return recommendations[
         recommendations['country'].str.contains(location, case=False, na=False)
     ]
 
 def filter_by_keyword(recommendations, keyword):
+    if tourism_data is None:
+        raise HTTPException(status_code=500, detail="Tourism data not loaded")
     return recommendations[
         recommendations['name'].str.contains(keyword, case=False, na=False) |
         recommendations['category'].str.contains(keyword, case=False, na=False) |
@@ -74,17 +99,21 @@ def filter_by_keyword(recommendations, keyword):
     ]
 
 def is_location(user_input):
-    return (
-        tourism_data['country'].str.contains(user_input, case=False, na=False).any() 
-    )
+    if tourism_data is None:
+        raise HTTPException(status_code=500, detail="Tourism data not loaded")
+    return tourism_data['country'].str.contains(user_input, case=False, na=False).any()
 
 def is_location_name(user_input):
+    if tourism_data is None:
+        raise HTTPException(status_code=500, detail="Tourism data not loaded")
     return tourism_data['name'].str.lower().eq(user_input.lower()).any()
 
-
 # Recommendation function
-def get_content_recommendations(user_input, n, cosine_sim=cosine_sim):
+def get_content_recommendations(user_input, n):
     try:
+        if tourism_data is None or cosine_sim is None or indices is None:
+            raise HTTPException(status_code=500, detail="Content-based filtering module not initialized")
+
         if user_input and is_location_name(user_input):
             # If the input is an exact location name (e.g., "Louvre Museum"), recommend similar items
             if user_input not in indices:
@@ -111,7 +140,7 @@ def get_content_recommendations(user_input, n, cosine_sim=cosine_sim):
                 if not keyword_filtered.empty:  # Check if keyword filtering returned any results
                     recommendations = keyword_filtered
                 else:
-                    logger.info(f"No results found for keyword '{user_input}'. Returning top-rated items.")
+                    logger.info(f"  No results found for keyword '{user_input}'. Returning top-rated items.")
                     recommendations = recommendations.head(n)  # Fallback to top-rated items
 
         # Return the top n recommendations
@@ -131,7 +160,7 @@ def train_and_save_model():
         }
         
         joblib.dump(model_data, MODEL_PATH)
-        logger.info("   CB Model trained and saved sucessfully.")
+        logger.info("   CB Model trained and saved successfully.")
     except Exception as e:
         logger.error(f" Failed to train and save model: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to train the model: {e}")
@@ -151,8 +180,3 @@ def load_model():
     except Exception as e:
         logger.error(f" Failed to load model: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to load the model: {e}")
-
-load_model()
-
-# Example usage
-# print(get_content_recommendations('London Eye'))

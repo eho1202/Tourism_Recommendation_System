@@ -17,6 +17,7 @@ ratings = pd.DataFrame()
 async def fetch_and_process_ratings():
     global ratings
     ratings = pd.DataFrame(await get_ratings())
+    return ratings
 
 # Load data
 tourism_data = load_csv("tourist_destinations.csv")
