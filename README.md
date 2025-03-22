@@ -27,11 +27,17 @@ $ python3 -m pip install -r requirements.txt
 py -m pip install -r requirements.txt
 ```
 
-## Running FastAPI locally
-Once all the dependencies are installed, run this command
+## Running the API locally
+Once all the dependencies are installed, run this command:
+```
+cp .env.dev .env
+```
+Go inside `.env` and fill in the credentials for each environment variable, then run this command:
+
 ```
 uvicorn main:app --reload
 ```
+You have sucessfully ran the API locally for development!
 ### The API has been deployed on Render
 Link to the docs: https://tourism-recommendation-system.onrender.com
 
