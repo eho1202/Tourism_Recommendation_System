@@ -1,11 +1,7 @@
 from fastapi import HTTPException
 import pandas as pd
-import requests
 import logging
-from surprise import SVD, Dataset, Reader, KNNBasic, accuracy
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from surprise.model_selection import KFold
+import traceback
 
 from algorithms.collaborative_filter import get_collaborative_recommendations
 from algorithms.content_based_filter import get_content_recommendations
@@ -15,7 +11,12 @@ from db import get_ratings
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-ratings = pd.DataFrame(get_ratings())
+ratings = pd.DataFrame()
+
+# Load ratings data
+async def fetch_and_process_ratings():
+    global ratings
+    ratings = pd.DataFrame(await get_ratings())
 
 # Load data
 tourism_data = load_csv("tourist_destinations.csv")
@@ -44,7 +45,7 @@ def hybrid_recommender(user_id, user_input=None, n=10):
         else:
             return get_content_recommendations(user_input, n)
     except Exception as e:
-        logger.error(f" Failed to generate recommendations for user {user_id}: {e}")
+        logger.error(f" Failed to generate recommendations for user {user_id}: {e}, {traceback.print_exc()}")
         raise HTTPException(status_code=500, detail=f"Failed to generate recommendations: {e}")
     
 # Example usage

@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+import asyncio
 import joblib
 import numpy as np
 import pandas as pd
@@ -16,6 +17,9 @@ logger = logging.getLogger(__name__)
 
 # Define the path to save the trained model
 MODEL_PATH = Path(__file__).parent / "collaborative_filter_model.pkl"
+
+ratings = pd.DataFrame()
+data = any
 
 def load_tourism_data():
     """
@@ -38,14 +42,14 @@ def load_tourism_data():
 tourism_data = load_tourism_data()
 
 
-# Load ratings data into DataFrame
-ratings = pd.DataFrame(get_ratings())
+# Load ratings data into Surprise Dataset
+async def fetch_and_process_ratings():
+    global ratings, data
+    ratings = pd.DataFrame(await get_ratings())
+    data = Dataset.load_from_df(ratings[['userId', 'itemId', 'rating']].copy(), reader)
 
 # Define the reader object with no rating scale specified (auto-detected)
 reader = Reader(rating_scale=(1, 5))
-
-# Load data into Surprise Dataset
-data = Dataset.load_from_df(ratings[['userId', 'itemId', 'rating']].copy(), reader)
 
 # Use KNNBasic algorithm for item-based collaborative filtering
 sim_options = {
