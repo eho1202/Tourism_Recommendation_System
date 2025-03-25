@@ -39,8 +39,8 @@ async def login(user: UserModel):
     
 @users_router.post("/auth/register")
 async def register_user(user: UserModel):
-    is_user_exist = get_user(user.email)
-    if is_user_exist:
+    is_user_exist = await get_user(user.email)
+    if is_user_exist is not None:
         raise HTTPException(status_code=403, detail="User already exists")
     
     # Grab the userId of the last user
@@ -51,7 +51,7 @@ async def register_user(user: UserModel):
     # Hash the password
     user.password = hash_password(user.password)
     
-    new_user = add_user(user)
+    new_user = await add_user(user)
     return new_user
 
 @users_router.get("/get-user-details/{user_id}", response_model=UserModel)
@@ -70,5 +70,5 @@ async def update_user_details(user_id: int, user: UserModel):
 
 @users_router.delete("/remove-user/{user_id}")
 async def remove_user(user_id: int):
-    result = delete_user(user_id)
+    result = await delete_user(user_id)
     return result
