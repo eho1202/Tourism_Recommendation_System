@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, HTTPException, status
 from passlib.context import CryptContext
 
-from db.user_db import get_user, add_user, get_last_user, delete_user, get_user_id, update_personal_details, update_preferences, update_saved_places
+from db.user_db import get_user, add_user, get_last_user, delete_user, get_user_id, update_personal_details
 from models.users import UserModel, UserResponseModel, LoginRequestModel
 
 users_router = APIRouter(
