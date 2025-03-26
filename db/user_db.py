@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 
 from db.connections import user_db
-from models.users import UserModel, TripRequest
+from models.users import UserModel
 
 users_collection = user_db['users']
 
