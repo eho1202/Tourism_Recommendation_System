@@ -12,7 +12,7 @@ recommendations_router = APIRouter(
     responses={404: {"description": "No recommendations found."}},
 )
 
-@recommendations_router.get("/", response_model=List[RecommendationsModel])
+# @recommendations_router.get("/", response_model=List[RecommendationsModel])
 
 @recommendations_router.get("/get-user-ratings/{user_id}", response_model=List[RatingModel])
 async def fetch_user_ratings(user_id: int):
