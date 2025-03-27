@@ -28,6 +28,7 @@ def load_tourism_data():
     """
     Load tourism data from a CSV file or another source.
     """
+    global tourism_data
     try:
         logger.info("   Loading tourism data...")
         tourism_data = load_csv("tourist_destinations.csv")
@@ -110,7 +111,7 @@ def get_collaborative_recommendations(user_id, user_input, n):
         return recommendations.head(n).to_dict(orient="records")
     except Exception as e:
         logger.error(f"Failed to generate collaborative recommendations: {e}")
-        return []  # Return an empty list if an error occurs
+        raise HTTPException(status_code=500, detail=f"Failed to generate collaborative recommendations.")
 
 def get_item_recommendations(item_id, n):
     try:
@@ -137,7 +138,7 @@ def train_and_save_model():
         logger.info("   Training the collaborative filtering model...")
         
         # Train the model
-        data = Dataset.load_from_df(ratings[['userId', 'itemId', 'rating']].copy(), reader)
+        data = Dataset.load_from_df(ratings[['userId', 'name', 'itemId', 'rating']].copy(), reader)
         trainset = data.build_full_trainset()
         algo.fit(trainset)
         
