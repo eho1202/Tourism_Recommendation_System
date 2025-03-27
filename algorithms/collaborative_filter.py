@@ -9,7 +9,7 @@ import requests
 from pathlib import Path
 import logging
 
-from db import get_ratings
+from db import get_ratings, get_locations
 from .datasets.load_data import load_csv
 
 logging.basicConfig(level=logging.INFO)
@@ -44,10 +44,11 @@ def load_tourism_data():
         raise HTTPException(status_code=500, detail=f"  Failed to load tourism data: {e}")
 
 # Load ratings data into Surprise Dataset
-async def fetch_and_process_ratings():
-    global ratings
+async def initialize():
+    global ratings, tourism_data
     ratings = pd.DataFrame(await get_ratings())
-    return ratings
+    tourism_data = load_tourism_data()
+    return ratings, tourism_data
 
 def filter_by_location(recommendations, location):
     return recommendations[
@@ -138,7 +139,7 @@ def train_and_save_model():
         logger.info("   Training the collaborative filtering model...")
         
         # Train the model
-        data = Dataset.load_from_df(ratings[['userId', 'name', 'itemId', 'rating']].copy(), reader)
+        data = Dataset.load_from_df(ratings[['userId', 'itemId', 'rating']].copy(), reader)
         trainset = data.build_full_trainset()
         algo.fit(trainset)
         
