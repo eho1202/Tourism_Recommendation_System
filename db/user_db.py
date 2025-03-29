@@ -6,7 +6,7 @@ from models.users import UserModel
 users_collection = user_db['users']
 
 async def get_user_id(user_id):
-    return users_collection.find_one({'userId': user_id}, {'_id': 0})
+    return await users_collection.find_one({'userId': user_id}, {'_id': 0})
 
 async def get_user(email):
     user = await users_collection.find_one({'email': email}, {'_id': 0})
