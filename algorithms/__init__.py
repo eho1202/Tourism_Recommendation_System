@@ -1,1 +1,1 @@
-from .hybrid_filter import hybrid_recommender
+from .hybrid_filter import HybridFilter

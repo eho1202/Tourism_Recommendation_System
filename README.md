@@ -13,9 +13,11 @@ python -m venv venv
 venv\Scripts\activate.bat
 # In PowerShell
 venv\Scripts\Activate.ps1
+# In Git Bash
+source venv/Scripts/activate
 
 # Linux or MacOS
-$ source myvenv/bin/activate
+$ source venv/bin/activate
 ```
 
 ### To install dependencies inside venv
@@ -39,7 +41,7 @@ uvicorn main:app --reload
 ```
 You have sucessfully ran the API locally for development!
 ### The API has been deployed on Render
-Link to the docs: https://tourism-recommendation-system.onrender.com
+Link to the docs: https://tourism-recommendation-system.onrender.com/docs
 
 ## Notes
 [Github Markdown Cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)  
