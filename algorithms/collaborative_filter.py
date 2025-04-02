@@ -46,10 +46,8 @@ class CollaborativeFilter:
 
     # Load ratings data into Surprise Dataset
     async def fetch_and_process_ratings(self):
-        global ratings, tourism_data
-        ratings = pd.DataFrame(await self.recommender_db.get_ratings())
-        tourism_data = self.load_tourism_data()
-        return ratings, tourism_data
+        self.ratings = pd.DataFrame(await self.recommender_db.get_ratings())
+        self.tourism_data = self.load_tourism_data()
 
     def filter_by_location(self, recommendations, location):
         return recommendations[
@@ -63,26 +61,26 @@ class CollaborativeFilter:
             recommendations['description'].str.contains(keyword, case=False, na=False)
         ]
 
-    def is_location(self, user_input):
-        return tourism_data['country'].str.contains(user_input, case=False, na=False).any() 
+    def is_country(self, user_input):
+        return self.tourism_data['country'].str.contains(user_input, case=False, na=False).any() 
 
     def is_location_name(self, user_input):
-        return tourism_data['name'].str.lower().eq(user_input.lower()).any()
+        return self.tourism_data['name'].str.lower().eq(user_input.lower()).any()
 
     async def get_collaborative_recommendations(self, user_id, user_input, n):
         try:
             if user_input and self.is_location_name(user_input):
                 # If the user searches for an item, use item-based collaborative filtering
-                item_id = tourism_data.loc[tourism_data['name'].str.lower() == user_input.lower(), 'itemId'].values # type: ignore
+                item_id = self.tourism_data.loc[self.tourism_data['name'].str.lower() == user_input.lower(), 'itemId'].values # type: ignore
                 if len(item_id) == 0:
                     logger.warning(f"No item found with name '{user_input}'.")
                     return []  # Return an empty list if no item is found
                 item_id = item_id[0]  # Get the first matching item ID
                 item_recommendations = self.get_item_recommendations(item_id, n)  # Returns a list of item IDs
-                recommendations = tourism_data[tourism_data['itemId'].isin(item_recommendations)][['name', 'category', 'country', 'description', 'itemRating']]
+                recommendations = self.tourism_data[self.tourism_data['itemId'].isin(item_recommendations)][['name', 'category', 'country', 'description', 'itemRating']]
             else:
                 # If the user does not search for an item, recommend top-rated items based on their rating history
-                user_items = ratings[ratings['userId'] == user_id]['itemId']
+                user_items = self.ratings[self.ratings['userId'] == user_id]['itemId']
                 
                 # Get recommendations for each item rated by the user
                 all_recommendations = []
@@ -94,14 +92,14 @@ class CollaborativeFilter:
                 unique_recommendations = list(set(all_recommendations) - set(user_items))
                 
                 # Get details for the recommended items
-                recommendations = tourism_data[tourism_data['itemId'].isin(unique_recommendations)][['name', 'category', 'country', 'description', 'itemRating']]
+                recommendations = self.tourism_data[self.tourism_data['itemId'].isin(unique_recommendations)][['name', 'category', 'country', 'description', 'itemRating']]
 
             # Apply location-based filtering if the input is a location
-            if user_input and self.is_location(user_input):
+            if user_input and self.is_country(user_input):
                 recommendations = self.filter_by_location(recommendations, user_input)
 
             # Apply keyword-based filtering if the input is not a location or location name
-            if user_input and not self.is_location(user_input) and not self.is_location_name(user_input):
+            if user_input and not self.is_country(user_input) and not self.is_location_name(user_input):
                 keyword_filtered = self.filter_by_keyword(recommendations, user_input)
                 if not keyword_filtered.empty:  # Check if keyword filtering returned any results
                     recommendations = keyword_filtered
@@ -120,13 +118,13 @@ class CollaborativeFilter:
             logger.info(f"  Generating recommendations for item {item_id}...")
             
             # Convert the item ID to the inner ID used by the model
-            inner_id = algo.trainset.to_inner_iid(item_id)
+            inner_id = self.algo.trainset.to_inner_iid(item_id)
             
             # Get the nearest neighbors
-            neighbors = algo.get_neighbors(inner_id, k=n)
+            neighbors = self.algo.get_neighbors(inner_id, k=n)
             
             # Convert inner IDs back to raw item IDs
-            item_recommendations = [algo.trainset.to_raw_iid(inner_id) for inner_id in neighbors]
+            item_recommendations = [self.algo.trainset.to_raw_iid(inner_id) for inner_id in neighbors]
 
             return item_recommendations  # Return a list of item IDs
         except Exception as e:
@@ -134,29 +132,26 @@ class CollaborativeFilter:
             raise HTTPException(status_code=500, detail=f"Failed to generate recommendations: {e}")
 
     def train_and_save_model(self):
-        global algo, data
-        logger.info(ratings)
         try:
             logger.info("   Training the collaborative filtering model...")
             
             # Train the model
-            data = Dataset.load_from_df(ratings[['userId', 'itemId', 'rating']].copy(), self.reader)
+            data = Dataset.load_from_df(self.ratings[['userId', 'itemId', 'rating']].copy(), self.reader)
             trainset = data.build_full_trainset()
-            algo.fit(trainset)
+            self.algo.fit(trainset)
             
             # Save the model
-            joblib.dump(algo, self.MODEL_PATH)
+            joblib.dump(self.algo, self.MODEL_PATH)
             logger.info("   CF Model trained and saved successfully.")
         except Exception as e:
             logger.error(f" Failed to train and save model: {e}")
             raise HTTPException(status_code=500, detail=f"Failed to train the model: {e}")
 
     def load_model(self):
-        global algo
         try:
             if self.MODEL_PATH.exists():
                 logger.info("   Loading pre-trained model...")
-                algo = joblib.load(self.MODEL_PATH)
+                self.algo = joblib.load(self.MODEL_PATH)
             else:
                 logger.info("   No pre-trained model found. Training a new model...")
                 self.train_and_save_model()
