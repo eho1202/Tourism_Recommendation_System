@@ -8,14 +8,14 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from .datasets.load_data import load_csv
-from db import LocationsCommands
+from db import LocationCommands
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class ContentBasedFilter:
     def __init__(self):
-        self.locations_db = LocationsCommands()
+        self.locations_db = LocationCommands()
         self.MODEL_PATH = Path(__file__).parent / "content_based_model.pkl"
         self.tourism_data = pd.DataFrame()
         self.tfidf = None
