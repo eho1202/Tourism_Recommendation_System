@@ -1,7 +1,7 @@
 import os
 import jwt
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException
 from passlib.context import CryptContext
 
 from db.recommender_db import RecommenderCommands
@@ -143,8 +143,8 @@ async def update_user_preferences(user_id: int, preferences: PreferencesModel):
     elif not preferences_result:
         raise HTTPException(status_code=400, detail="Failed to update preferences collection.")
 
-@users_router.patch("/update-saved-places/{user_id}")
-async def update_user_saved_places(user_id: int, saved_places: FavouritesRequestModel):
+@users_router.patch("/update-favourites/{user_id}")
+async def update_user_favourites(user_id: int, favourites: FavouritesRequestModel):
     """_Update user's saved places, not in trips_
 
     Args:
@@ -166,8 +166,8 @@ async def update_user_saved_places(user_id: int, saved_places: FavouritesRequest
     Raises:
         HTTPException: status_code=`400`, detail=`Failed to update user saved places.`
     """
-    for operation in saved_places.operations:
-        result = await user_db.update_saved_places(user_id, {"operation": operation.operation, "place": operation.place})
+    for operation in favourites.operations:
+        result = await user_db.update_favourites(user_id, {"operation": operation.operation, "place": operation.place})
     if not result:
         raise HTTPException(status_code=400, detail="Failed to update user saved places.")
     return {"message": "All operations completed successfully."}

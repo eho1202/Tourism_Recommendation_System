@@ -59,7 +59,7 @@ class UserCommands:
         return result
 
     # TODO: If operation is add, add new rating (rating=random.randint(1, 3))
-    async def update_saved_places(self, user_id: int, operation_data: dict):
+    async def update_favourites(self, user_id: int, operation_data: dict):
         if operation_data["operation"] == "add":
             await self.users_collection.update_one({"userId": user_id}, {"$addToSet": {"favourites": operation_data["place"]}})
         elif operation_data["operation"] == "remove":
