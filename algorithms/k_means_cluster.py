@@ -28,10 +28,19 @@ class UserClusterer:
         self.load_or_create_models()
     
     async def load_user_data(self):
-        """Load user data from database"""
+        """Load user data from database and flatten profile structure"""
         users_cursor = self.user_db.get_105_users()
         users_list = await users_cursor.to_list(length=None)
-        return pd.DataFrame(users_list)
+        
+        # Convert to DataFrame and flatten profile structure
+        df = pd.DataFrame(users_list)
+        
+        # Extract profile fields if they exist
+        if 'profile' in df.columns:
+            profile_df = pd.json_normalize(df['profile'])
+            df = pd.concat([df.drop(['profile'], axis=1), profile_df], axis=1)
+        
+        return df
     
     def load_or_create_models(self):
         """Load existing models or create new ones if they don't exist"""
@@ -103,7 +112,10 @@ class UserClusterer:
         }
 
     def prepare_new_user(self, user_data):
-        """Convert raw user data to model-ready format"""
+        """Convert raw user data to model-ready format, handling nested profile"""
+        # Extract profile data if nested
+        profile_data = user_data.get('profile', {})
+        
         # Ensure preferences exist
         prefs = user_data.get('preferences', {})
         if isinstance(prefs, str):
@@ -114,10 +126,10 @@ class UserClusterer:
         
         # Build feature DataFrame matching training structure
         return pd.DataFrame([{
-            'ageGroup': user_data.get('ageGroup', 0),
-            'location': user_data.get('location', 'unknown'),
-            'job': user_data.get('job', 'unknown'),
-            'gender': user_data.get('gender', 'unknown'),
+            'ageGroup': profile_data.get('ageGroup', user_data.get('ageGroup', 0)),
+            'location': profile_data.get('location', user_data.get('location', 'unknown')),
+            'job': profile_data.get('job', user_data.get('job', 'unknown')),
+            'gender': profile_data.get('gender', user_data.get('gender', 'unknown')),
             'env_features': ' '.join(prefs.get('environments', ['unknown_env'])),
             'food_features': ' '.join(prefs.get('food', ['unknown_food'])),
             'act_features': ' '.join(prefs.get('activities', ['unknown_act']))
@@ -126,7 +138,7 @@ class UserClusterer:
     async def cluster_user(self, user_id, user_data):
         """Cluster a single new user"""
         if not self.models_loaded:
-            self.load_or_create_models()
+            await self.initialize()
         
         user_df = self.prepare_new_user(user_data)
         features = self.preprocessor.transform(user_df)
@@ -135,6 +147,26 @@ class UserClusterer:
         if result:
             logger.info(f"  User {user_id} clustered to {cluster_val}")
         return cluster_val
+
+    async def recluster_all_users(self):
+        """Recluster all users in the database"""
+        if not self.models_loaded:
+            await self.initialize()
+        
+        users_cursor = self.user_db.get_all_users()
+        users_list = await users_cursor.to_list(length=None)
+        
+        results = []
+        for user in users_list:
+            try:
+                cluster = await self.cluster_user(user['userId'], user)
+                results.append((user['userId'], cluster))
+            except Exception as e:
+                logger.error(f"Failed to cluster user {user.get('userId')}: {str(e)}")
+                continue
+        
+        logger.info(f"Completed reclustering of {len(results)} users")
+        return results
 
 # # Example usage
 # if __name__ == "__main__":

@@ -17,6 +17,11 @@ class UserCommands:
         users = self.users_collection.find({'userId': {'$gte': 0, '$lte': 99}}, {'_id': 0})
         return users
     
+    def get_all_users(self):
+        """Grabs all the users in the db for clustering"""
+        users = self.users_collection.find({}, {'_id': 0})
+        return users
+    
     async def get_cluster_peers(self, cluster):
         """Gets cluster peers based on cluster number"""
         user_ids = []
