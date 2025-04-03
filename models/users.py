@@ -21,7 +21,7 @@ class UserModel(BaseModel):
     location: Optional[str]
     job: Optional[str]
     preferences: Optional[Dict[str, List[str]]]
-    savedPlaces: Optional[List[str]]
+    favourites: Optional[List[str]]
     savedTrips: Optional[Dict[str, TripDetails]]
     cluster: Optional[int]
 
@@ -38,7 +38,7 @@ class SavedPlaceOperation(BaseModel):
     operation: str
     place: str
 
-class SavedPlacesRequestModel(BaseModel):
+class FavouritesRequestModel(BaseModel):
     operations: List[SavedPlaceOperation]
 
 class UserUpdateModel(BaseModel):
@@ -58,6 +58,6 @@ class UserResponseModel(BaseModel):
     location: Optional[str] = None
     job: Optional[str] = None
     preferences: Optional[Dict[str, List[str]]] = None
-    savedPlaces: Optional[List[str]] = None
+    favourites: Optional[List[str]] = None
     savedTrips: Optional[Dict[str, TripDetails]] = None
     cluster: Optional[int]

@@ -3,7 +3,7 @@ from pymongo import ReturnDocument
 from typing import Optional
 
 from db.connections import ConnectionManager
-from models.users import UserModel, UserUpdateModel, TripDetails, SavedPlacesRequestModel
+from models.users import UserModel, UserUpdateModel, TripDetails, FavouritesRequestModel
 from models.recommendations import PreferencesModel
 
 class UserCommands:
@@ -61,9 +61,9 @@ class UserCommands:
     # TODO: If operation is add, add new rating (rating=random.randint(1, 3))
     async def update_saved_places(self, user_id: int, operation_data: dict):
         if operation_data["operation"] == "add":
-            await self.users_collection.update_one({"userId": user_id}, {"$addToSet": {"savedPlaces": operation_data["place"]}})
+            await self.users_collection.update_one({"userId": user_id}, {"$addToSet": {"favourites": operation_data["place"]}})
         elif operation_data["operation"] == "remove":
-            await self.users_collection.update_one({"userId": user_id}, {"$pull": {"savedPlaces": operation_data["place"]}})
+            await self.users_collection.update_one({"userId": user_id}, {"$pull": {"favourites": operation_data["place"]}})
         return {'message': 'Saved places updated successfully'}
 
     async def add_trip(self, user_id: int, trip: TripDetails):

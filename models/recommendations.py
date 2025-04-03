@@ -6,6 +6,11 @@ class RatingModel(BaseModel):
     userId: int
     itemId: int
     rating: int
+    
+class RecommendationsRequest(BaseModel):
+    userId: Optional[int] = None
+    userInput: Optional[str] = None
+    n: int = 10
 
 class RecommendationsModel(BaseModel):
     name: str

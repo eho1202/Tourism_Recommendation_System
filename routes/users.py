@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 
 from db.recommender_db import RecommenderCommands
 from db.user_db import UserCommands
-from models.users import UserModel, UserUpdateModel, UserResponseModel, LoginRequestModel, RegisterRequestModel, TripDetails, SavedPlacesRequestModel
+from models.users import UserModel, UserUpdateModel, UserResponseModel, LoginRequestModel, RegisterRequestModel, TripDetails, FavouritesRequestModel
 from models.recommendations import PreferencesModel
 
 users_router = APIRouter(
@@ -77,7 +77,7 @@ async def register_user(user: RegisterRequestModel):
         location=None,
         job=None,
         preferences=None,
-        savedPlaces=None,
+        favourites=None,
         savedTrips=None,
         cluster=None,
     )
@@ -144,7 +144,7 @@ async def update_user_preferences(user_id: int, preferences: PreferencesModel):
         raise HTTPException(status_code=400, detail="Failed to update preferences collection.")
 
 @users_router.patch("/update-saved-places/{user_id}")
-async def update_user_saved_places(user_id: int, saved_places: SavedPlacesRequestModel):
+async def update_user_saved_places(user_id: int, saved_places: FavouritesRequestModel):
     """_Update user's saved places, not in trips_
 
     Args:
@@ -194,7 +194,7 @@ async def add_user_trip(user_id: int, trip: TripDetails):
     return {"message": f"Trip {trip.tripId} added successfully"}
         
 
-@users_router.patch("/update-trips/{user_id}")
+@users_router.patch("/update-trip/{user_id}")
 async def update_user_trip(user_id: int, trip: TripDetails):
     """Update user trip when user changes trip information
     

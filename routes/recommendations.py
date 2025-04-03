@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query, Request
 from db.recommender_db import RecommenderCommands
-from models.recommendations import RatingModel, RecommendationsModel
+from models.recommendations import RatingModel, RecommendationsModel, RecommendationsRequest
 from typing import List, Optional
 
 from algorithms import HybridFilter
@@ -14,10 +14,10 @@ recommendations_router = APIRouter(
     responses={404: {"description": "No recommendations found."}},
 )
 
-@recommendations_router.get("/", response_model=List[RecommendationsModel])
-async def fetch_user_recommendations(request: Request, user_id: Optional[int] = None, user_input: Optional[str] = Query(None), n: int = Query(10)):
+@recommendations_router.post("/", response_model=List[RecommendationsModel])
+async def fetch_user_recommendations(request: Request, request_body: RecommendationsRequest):
     hybrid = request.app.state.recommender
-    recommendations = await hybrid.get_recommendations(user_id, user_input, n)
+    recommendations = await hybrid.get_recommendations(request_body.userId, request_body.userInput, request_body.n)
     return recommendations
 
 @recommendations_router.get("/ratings/{user_id}", response_model=List[RatingModel])
