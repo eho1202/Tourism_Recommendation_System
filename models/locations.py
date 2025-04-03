@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class Location(BaseModel):
+class LocationModel(BaseModel):
     locationId: int
     name: str
     country: str

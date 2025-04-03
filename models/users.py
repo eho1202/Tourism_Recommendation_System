@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Dict
 from datetime import datetime
 
@@ -10,28 +10,31 @@ class TripDetails(BaseModel):
     endDate: Optional[datetime] = None
     itinerary: Optional[List] = None
 
+class ProfileModel(BaseModel):
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+    gender: Optional[str] = None
+    ageGroup: Optional[int] = None
+    location: Optional[str] = None
+    job: Optional[str] = None
+
 class UserModel(BaseModel):
     userId: int
-    email: str
+    email: EmailStr
     password: str
-    firstName: Optional[str]
-    lastName: Optional[str]
-    gender: Optional[str]
-    ageGroup: Optional[int]
-    location: Optional[str]
-    job: Optional[str]
-    preferences: Optional[Dict[str, List[str]]]
-    favourites: Optional[List[str]]
-    savedTrips: Optional[Dict[str, TripDetails]]
-    cluster: Optional[int]
+    profile: Optional[ProfileModel] = None
+    preferences: Optional[Dict[str, List[str]]] = None
+    favourites: Optional[List[str]] = None
+    savedTrips: Optional[Dict[str, TripDetails]] = None
+    cluster: Optional[int] = None
 
 class LoginRequestModel(BaseModel):
-    email: str
+    email: EmailStr
     password: str
     
 class RegisterRequestModel(BaseModel):
     userId: int
-    email: str
+    email: EmailStr
     password: str
 
 class SavedPlaceOperation(BaseModel):
@@ -41,23 +44,26 @@ class SavedPlaceOperation(BaseModel):
 class FavouritesRequestModel(BaseModel):
     operations: List[SavedPlaceOperation]
 
-class UserUpdateModel(BaseModel):
-    firstName: Optional[str] = None
-    lastName: Optional[str] = None
-    email: Optional[str] = None
+class CredentialsUpdateModel(BaseModel):
+    userId: int
+    email: Optional[EmailStr] = None
     password: Optional[str] = None
 
-class UserResponseModel(BaseModel):
+class ProfileUpdateModel(BaseModel):
     userId: int
-    email: str
-    password: str
     firstName: Optional[str] = None
     lastName: Optional[str] = None
     gender: Optional[str] = None
     ageGroup: Optional[int] = None
     location: Optional[str] = None
     job: Optional[str] = None
+
+class UserResponseModel(BaseModel):
+    userId: int
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+    profile: Optional[ProfileModel] = None
     preferences: Optional[Dict[str, List[str]]] = None
     favourites: Optional[List[str]] = None
     savedTrips: Optional[Dict[str, TripDetails]] = None
-    cluster: Optional[int]
+    cluster: Optional[int] = None

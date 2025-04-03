@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 
 from db.recommender_db import RecommenderCommands
 from db.user_db import UserCommands
-from models.users import UserModel, UserUpdateModel, UserResponseModel, LoginRequestModel, RegisterRequestModel, TripDetails, FavouritesRequestModel
+from models.users import UserModel, CredentialsUpdateModel, UserResponseModel, LoginRequestModel, RegisterRequestModel, TripDetails, FavouritesRequestModel, ProfileModel, ProfileUpdateModel
 from models.recommendations import PreferencesModel
 
 users_router = APIRouter(
@@ -36,7 +36,7 @@ def create_access_token(data: dict, expires_delta: timedelta=None): # type: igno
 
 @users_router.post("/auth/login")
 async def login(user: LoginRequestModel):
-    is_user_exist = await user_db.get_user_email(user.email)
+    is_user_exist = await user_db.get_user_by_email(user.email)
     if not is_user_exist or not pwd_context.verify(user.password, is_user_exist['password']):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     access_token = create_access_token(data={"sub": user.email})
@@ -55,7 +55,7 @@ async def register_user(user: RegisterRequestModel):
     Returns:
         _type_: _description_
     """
-    is_user_exist = await user_db.get_user_email(user.email)
+    is_user_exist = await user_db.get_user_by_email(user.email)
     if is_user_exist is not None:
         raise HTTPException(status_code=403, detail="User already exists")
     # Grab the userId of the last user
@@ -70,12 +70,14 @@ async def register_user(user: RegisterRequestModel):
         userId=user.userId,
         email=user.email,
         password=hashed_password,
-        firstName=None,
-        lastName=None,
-        gender=None,
-        ageGroup=None,
-        location=None,
-        job=None,
+        profile=ProfileModel(
+            firstName=None,
+            lastName=None,
+            gender=None,
+            ageGroup=None,
+            location=None,
+            job=None,   
+        ),
         preferences=None,
         favourites=None,
         savedTrips=None,
@@ -85,32 +87,67 @@ async def register_user(user: RegisterRequestModel):
     confirm_user = await user_db.add_user(new_user)
     return confirm_user
 
-@users_router.get("/get-user-details/{user_id}", response_model=UserModel)
+@users_router.get("/get-user-details", response_model=UserModel)
 async def get_user_info(user_id: int):
-    user_data = await user_db.get_user_id(user_id)
+    user_data = await user_db.get_user_by_id(user_id)
     if user_data is None:
         raise HTTPException(status_code=404, detail="User not found")
     
     user = UserModel(**user_data)
     return user
 
-@users_router.patch("/{user_id}", response_model=UserResponseModel)
-async def update_user_details(user_id: int, user: UserUpdateModel):
-    """ Updates user information in Profiles """
-    if user.password is not None:
-        user.password = hash_password(user.password)
+@users_router.patch("/credentials", response_model=UserResponseModel)
+async def update_user_credentials(credentials: CredentialsUpdateModel):
+    update_data = credentials.model_dump(exclude_unset=True, exclude_none=True)
     
-    result = await user_db.update_personal_details(user_id, user)
-    if result is None:
+    # Hash password if provided
+    if 'password' in update_data:
+        update_data['password'] = hash_password(update_data['password'])
+    
+    # Check for email uniqueness if email is being updated
+    if 'email' in update_data:
+        existing = await user_db.get_user_by_email(update_data['email'])
+        if existing and existing['userId'] != credentials.userId:
+            raise HTTPException(
+                status_code=409,
+                detail="Email already in use by another account"
+            )
+    
+    # Perform update
+    result = await user_db.update_credentials(credentials.userId, update_data)
+    
+    if not result:
         raise HTTPException(status_code=404, detail="User not found")
     return result
 
-@users_router.delete("/remove-user/{user_id}")
+@users_router.patch("/profile", response_model=UserResponseModel)
+async def update_user_details(profile: ProfileUpdateModel):
+    """Updates user information in Profiles"""
+    existing_user = await user_db.get_user_by_id(profile.userId)
+    if not existing_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prepare update data
+    update_data = profile.model_dump(exclude_unset=True, exclude_none=True, exclude={"userId"})
+    
+    # Perform update
+    updated_user = await user_db.update_personal_details(user_id=profile.userId, profile_data=update_data)
+    
+    if not updated_user:
+        raise HTTPException(status_code=500, detail="Failed to update profile")
+    
+    # Ensure profile exists in response
+    if "profile" not in updated_user:
+        updated_user["profile"] = {}
+    
+    return UserResponseModel(**updated_user)
+
+@users_router.delete("/remove-user")
 async def remove_user(user_id: int):
     result = await user_db.delete_user(user_id)
     return result
 
-@users_router.patch("/update-preferences/{user_id}")
+@users_router.patch("/update-preferences")
 async def update_user_preferences(user_id: int, preferences: PreferencesModel):
     """Updates user's preferences
     
@@ -143,7 +180,7 @@ async def update_user_preferences(user_id: int, preferences: PreferencesModel):
     elif not preferences_result:
         raise HTTPException(status_code=400, detail="Failed to update preferences collection.")
 
-@users_router.patch("/update-favourites/{user_id}")
+@users_router.patch("/update-favourites")
 async def update_user_favourites(user_id: int, favourites: FavouritesRequestModel):
     """_Update user's saved places, not in trips_
 
@@ -172,7 +209,7 @@ async def update_user_favourites(user_id: int, favourites: FavouritesRequestMode
         raise HTTPException(status_code=400, detail="Failed to update user saved places.")
     return {"message": "All operations completed successfully."}
 
-@users_router.post("/add-trip/{user_id}")
+@users_router.post("/add-trip")
 async def add_user_trip(user_id: int, trip: TripDetails):
     """Add user trip when user creates a trip
     
@@ -194,7 +231,7 @@ async def add_user_trip(user_id: int, trip: TripDetails):
     return {"message": f"Trip {trip.tripId} added successfully"}
         
 
-@users_router.patch("/update-trip/{user_id}")
+@users_router.patch("/update-trip")
 async def update_user_trip(user_id: int, trip: TripDetails):
     """Update user trip when user changes trip information
     
@@ -212,7 +249,7 @@ async def update_user_trip(user_id: int, trip: TripDetails):
     result = await user_db.update_trip(user_id, trip)
     return result
 
-@users_router.delete("/delete-trip/{user_id}")
+@users_router.delete("/delete-trip")
 async def delete_user_trip(user_id: int, trip_id: str):
     """Deletes user's trip"""
     result = await user_db.delete_trip(user_id, trip_id)

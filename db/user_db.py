@@ -3,7 +3,7 @@ from pymongo import ReturnDocument
 from typing import Optional
 
 from db.connections import ConnectionManager
-from models.users import UserModel, UserUpdateModel, TripDetails, FavouritesRequestModel
+from models.users import UserModel, CredentialsUpdateModel, TripDetails, FavouritesRequestModel
 from models.recommendations import PreferencesModel
 
 class UserCommands:
@@ -12,7 +12,7 @@ class UserCommands:
         self.user_db = self.connection.get_user_db()
         self.users_collection = self.user_db['users']
 
-    def get_100_users(self):
+    def get_105_users(self):
         """Grabs the first 105 users for clustering"""
         users = self.users_collection.find({'userId': {'$gte': 0, '$lte': 99}}, {'_id': 0})
         return users
@@ -30,10 +30,10 @@ class UserCommands:
         result = await self.users_collection.update_one({'userId': user_id}, {'$set': {'cluster': cluster}})
         return result
 
-    async def get_user_id(self, user_id):
+    async def get_user_by_id(self, user_id):
         return await self.users_collection.find_one({'userId': user_id}, {'_id': 0})
 
-    async def get_user_email(self, email):
+    async def get_user_by_email(self, email):
         user = await self.users_collection.find_one({'email': email}, {'_id': 0})
         return user
 
@@ -47,11 +47,30 @@ class UserCommands:
         if result.inserted_id is None:
             raise HTTPException(status_code=500, detail="Failed to add user")
         return result
+    
+    async def update_credentials(self, user_id: int, credentials_data: dict):
+        current_user = await self.users_collection.find_one({"userId": user_id})
+        if not current_user:
+            return None
+        
+        # Perform the update - $set will only modify the specified fields
+        update_result = await self.users_collection.find_one_and_update({"userId": user_id}, {"$set": credentials_data}, return_document=ReturnDocument.AFTER)
+        return update_result
 
-    async def update_personal_details(self, user_id: int, user: UserUpdateModel):
-        user_dict = user.model_dump(exclude_unset=True)
-        result = await self.users_collection.find_one_and_update({"userId": user_id}, {"$set": user_dict}, return_document=ReturnDocument.AFTER)
-        return result
+    async def update_personal_details(self, user_id: int, profile_data: dict):
+        current_user = await self.users_collection.find_one({"userId": user_id})
+        current_profile = current_user.get("profile", {}) if current_user else {}
+        
+        # Merge existing profile with new updates
+        merged_profile = {**current_profile, **profile_data}
+        
+        # Perform the update
+        update_result = await self.users_collection.find_one_and_update(
+            {"userId": user_id},
+            {"$set": {"profile": merged_profile}},
+            return_document=ReturnDocument.AFTER
+        )
+        return update_result
 
     async def update_preferences(self, user_id: int, preferences: PreferencesModel):
         preferences_dict = preferences.model_dump(exclude={"userId"})

@@ -29,7 +29,7 @@ class UserClusterer:
     
     async def load_user_data(self):
         """Load user data from database"""
-        users_cursor = self.user_db.get_100_users()
+        users_cursor = self.user_db.get_105_users()
         users_list = await users_cursor.to_list(length=None)
         return pd.DataFrame(users_list)
     
