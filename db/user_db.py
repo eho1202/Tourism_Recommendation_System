@@ -53,12 +53,12 @@ class UserCommands:
         result = await self.users_collection.find_one_and_update({"userId": user_id}, {"$set": user_dict}, return_document=ReturnDocument.AFTER)
         return result
 
-    # TODO: Implement the following functions
     async def update_preferences(self, user_id: int, preferences: PreferencesModel):
         preferences_dict = preferences.model_dump(exclude={"userId"})
         result = await self.users_collection.update_one({"userId": user_id}, {"$set": {"preferences": preferences_dict}})
         return result
 
+    # TODO: If operation is add, add new rating (rating=random.randint(1, 3))
     async def update_saved_places(self, user_id: int, operation_data: dict):
         if operation_data["operation"] == "add":
             await self.users_collection.update_one({"userId": user_id}, {"$addToSet": {"savedPlaces": operation_data["place"]}})
@@ -89,7 +89,11 @@ class UserCommands:
         if result.modified_count == 0:
             raise HTTPException(status_code=400, detail=f"Could not make changes to trip {trip_id}.")
         return {"message": f"Trip {trip_id} updated successfully."}
-            
+    
+    # TODO: Add function to update savedTripItems, then if operation is add, add new rating (rating=random.randint(4, 5))
+    async def update_trip_locations(self, user_id: int, trip_items):
+        print("omg")
+      
     async def delete_trip(self, user_id, trip_id):
         result = await self.users_collection.update_one({"userId": user_id}, {"$unset": {f"savedTrips.{trip_id}": ""}})
         if result.modified_count == 0:

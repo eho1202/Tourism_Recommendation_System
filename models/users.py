@@ -8,6 +8,7 @@ class TripDetails(BaseModel):
     destination: Optional[str] = None
     startDate: Optional[datetime] = None
     endDate: Optional[datetime] = None
+    itinerary: Optional[List] = None
 
 class UserModel(BaseModel):
     userId: int

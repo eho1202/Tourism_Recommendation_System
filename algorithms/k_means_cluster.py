@@ -102,7 +102,6 @@ class UserClusterer:
             "activities": pref_dict.get("activities", ["unknown_activity"])
         }
 
-    # TODO: fix features when reading user_data
     def prepare_new_user(self, user_data):
         """Convert raw user data to model-ready format"""
         # Ensure preferences exist

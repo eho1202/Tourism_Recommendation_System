@@ -1,8 +1,8 @@
 from fastapi import HTTPException
-from db.connections import ConnectionManager
-from models.recommendations import PreferencesModel
-from datetime import datetime, timezone
 from typing import Optional
+
+from db.connections import ConnectionManager
+from models.recommendations import PreferencesModel, RatingModel
 
 class RecommenderCommands:
     def __init__(self, connection: Optional[ConnectionManager] = None):
@@ -32,11 +32,47 @@ class RecommenderCommands:
             print(f'Error retrieving user ratings: {e}')
             raise
         return ratings
+    
+    async def add_user_rating(self, new_rating: RatingModel):
+        rating_dict = new_rating.model_dump() 
+        result = await self.ratings_collection.insert_one(rating_dict)
+        
+        if result.inserted_id is None:
+            raise HTTPException(status_code=500, detail="Failed to add rating")
+        
+        return {"message": "Rating added successfully."}
+
+
+    async def update_user_rating(self, new_rating: RatingModel):
+        rating_dict = new_rating.model_dump()
+        result = await self.ratings_collection.update_one(
+            {"userId": rating_dict["userId"], "itemId": rating_dict["itemId"]},
+            {"$set": rating_dict}
+        )
+
+        # Check if the update was successful
+        if result.modified_count == 0:
+            raise HTTPException(status_code=500, detail="Failed to update rating")
+
+        return {"message": "Rating updated successfully."}
+    
+    async def delete_user_rating(self, user_id: int, item_id: int):
+        is_rating_exist = await self.ratings_collection.find_one({"userId": user_id, "itemId": item_id})
+        
+        if not is_rating_exist:
+            raise HTTPException(status_code=404, detail="Could not find rating")
+        
+        delete_result = await self.ratings_collection.delete_one(is_rating_exist)
+        
+        if delete_result.deleted_count == 0:
+            raise HTTPException(status_code=500, detail="Failed to delete rating")
+        
+        return {"message": "Successfully deleted user's rating."}
 
     async def update_preferences_collection(self, preferences: PreferencesModel):
         preferences_dict = preferences.model_dump()
         result = await self.preferences_collection.update_one({"userId": preferences_dict["userId"]}, {"$set": preferences_dict}, upsert=True)
-        if result is None:
+        if result.modified_count == 0:
             raise HTTPException(status_code=500, detail="Failed to add user preferences")
         return result
         

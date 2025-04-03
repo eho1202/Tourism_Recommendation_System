@@ -15,23 +15,21 @@ logger = logging.getLogger(__name__)
 clusterer = UserClusterer()
 cf = CollaborativeFilter()
 cb = ContentBasedFilter()
-hybrid = HybridFilter()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("   Starting Lifespan...")
-    await cb.initialize_data_and_model()
-    await cf.initialize_data_and_model()
-    await clusterer.initialize()
-    await hybrid.fetch_and_process_ratings()
+    hybrid = HybridFilter()
+    await hybrid.initialize()
+    
+    app.state.recommender = hybrid
     yield
 
 app = FastAPI(title="Social Network based Recommender System for Tourists", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "*"],  
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"], 
     allow_headers=["*"], 

@@ -25,10 +25,10 @@ class ContentBasedFilter:
         self.indices = None
         
     async def initialize_data_and_model(self):
+        await self.initialize()
         try:
             self.load_model()
         except:
-            await self.initialize()
             self.train_and_save_model()
             
     # Load the tourism dataset
@@ -73,7 +73,7 @@ class ContentBasedFilter:
             self.tourism_data = self.tourism_data.reset_index()
             self.indices = pd.Series(self.tourism_data.index, index=self.tourism_data['name'])
             
-            logger.info("Content-based filtering module initialized")
+            logger.info("   Content-based filtering module initialized")
         except Exception as e:
             logger.error(f"Initialization failed: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Initialization failed: {str(e)}")

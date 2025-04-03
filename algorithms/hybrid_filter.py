@@ -20,26 +20,41 @@ class HybridFilter:
         self.ratings = pd.DataFrame()
         self.tourism_data = load_csv("tourist_destinations.csv")
         
+        self.clusterer = None
+        self.cf = None
+        self.cb = None
+
+    async def initialize(self):
         self.clusterer = UserClusterer()
         self.cf = CollaborativeFilter()
         self.cb = ContentBasedFilter()
-
-
-    # Load ratings data
+        
+        await self.clusterer.initialize()
+        await self.cf.initialize_data_and_model()
+        await self.cb.initialize_data_and_model()
+        await self.fetch_and_process_ratings()
+        
+        logger.info("   Hybrid filter initialized.")
+        
     async def fetch_and_process_ratings(self):
-        global ratings
-        ratings = pd.DataFrame(await self.recommender_db.get_ratings())
-        return ratings
+        ratings_from_mongodb = pd.DataFrame(await self.recommender_db.get_ratings())
+        self.ratings = pd.DataFrame(ratings_from_mongodb)
 
-    async def hybrid_recommender(self, user_id, user_input=None, n=10):
+    async def get_recommendations(self, user_id, user_input=None, n=10):
         try:
+            if user_id is None:
+                logger.info("   User is guest user, serving guest user recommendations.")
+                if not user_input:
+                    return self.get_popular_items(n)
+                return await self.cb.get_content_recommendations(user_input, n)
+            
             user_data = await self.user_db.get_user_id(user_id)
             if user_data is None:
-                raise HTTPException(status_code=400, detail="User data is not available for the given user_id")
+                raise HTTPException(status_code=400, detail="User data is not available for the given user_id.")
 
-            user_ratings_count = len(ratings[ratings['userId'] == user_id])
+            user_ratings_count = len(self.ratings[self.ratings['userId'] == user_id])
             
-            if user_id not in ratings['userId'].unique():
+            if user_id not in self.ratings['userId'].unique():
                 # New user - use clustering
                 logger.info(f"  User {user_id} is a new user. Using clustering-based recommendations.")
                 
@@ -50,7 +65,7 @@ class HybridFilter:
                 cluster_pd = pd.DataFrame(cluster_users)
                 
                 # Get top-rated items from cluster
-                cluster_ratings = ratings[ratings['userId'].isin(cluster_pd)]
+                cluster_ratings = self.ratings[self.ratings['userId'].isin(cluster_pd)]
                 if cluster_ratings.empty:
                     logger.warning(f"   No ratings found for cluster {cluster}. Using content-based fallback")
                     return await self.cb.get_content_recommendations(user_input, n)
@@ -75,7 +90,19 @@ class HybridFilter:
             logger.error(f" Failed to generate recommendations for user {user_id}: {e}, {traceback.print_exc()}")
             raise HTTPException(status_code=500, detail=f"Failed to generate recommendations: {e}")
     
+    def get_popular_items(self, n):
+        if self.ratings.empty:
+            return self.tourism_data.head(n).to_dict('records')
+            
+        popular_items = (self.ratings.groupby('itemId')['rating']
+                        .mean()
+                        .sort_values(ascending=False)
+                        .head(n))
+        return self.tourism_data[self.tourism_data['itemId'].isin(popular_items.index)].to_dict('records')
+    
+    
+    
 # Example usage
-# print("Recommendations for userId=45:",hybrid_recommender(userId=45, item_name='London Eye', n=5)) # Should use cb
-# print("Recommendations for userId=59:", hybrid_recommender(userId=59, n=5)) # Should use cf
-# print("Recommendations for userId=199",hybrid_recommender(userId=199, n=5)) # Should cluster first then cb
+# print("Recommendations for userId=45:",get_recommendations(userId=45, item_name='London Eye', n=5)) # Should use cb
+# print("Recommendations for userId=59:", get_recommendations(userId=59, n=5)) # Should use cf
+# print("Recommendations for userId=199",get_recommendations(userId=199, n=5)) # Should cluster first then cb
