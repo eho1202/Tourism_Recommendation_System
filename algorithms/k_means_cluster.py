@@ -114,7 +114,7 @@ class UserClusterer:
         
         # Build feature DataFrame matching training structure
         return pd.DataFrame([{
-            'ageGroup': user_data.get('age_group', 0),
+            'ageGroup': user_data.get('ageGroup', 0),
             'location': user_data.get('location', 'unknown'),
             'job': user_data.get('job', 'unknown'),
             'gender': user_data.get('gender', 'unknown'),
