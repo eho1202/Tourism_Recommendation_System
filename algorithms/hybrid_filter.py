@@ -57,6 +57,10 @@ class HybridFilter:
             # Convert to DataFrame
             self.tourism_data = pd.DataFrame(locations_list)
             
+            self.tourism_data = self.tourism_data.apply(
+                lambda col: col.fillna('') if col.dtype == 'object' else col.fillna(0)
+            )
+            
             logger.info("   Tourism data loaded successfully from database.")
         except Exception as e:
             logger.error(f" Failed to load tourism data from database: {e}")
@@ -114,10 +118,33 @@ class HybridFilter:
     
     def get_popular_items(self, n):
         if self.ratings.empty:
-            return self.tourism_data.head(n).to_dict('records')
+            # Return tourism data with null ratings converted to None (which becomes null in JSON)
+            return [self._clean_dict(item) for item in self.tourism_data.head(n).to_dict('records')]
             
         popular_items = (self.ratings.groupby('locationId')['rating']
                         .mean()
                         .sort_values(ascending=False)
                         .head(n))
-        return self.tourism_data[self.tourism_data['locationId'].isin(popular_items.index)].to_dict('records')
+        
+        # Get the tourism data for popular items
+        result = self.tourism_data[self.tourism_data['locationId'].isin(popular_items.index)]
+        
+        # Add the average rating to each item
+        result = result.merge(
+            popular_items.rename('averageRating'), 
+            left_on='locationId', 
+            right_index=True
+        )
+        
+        # Convert to dict and clean NaN values
+        return [self._clean_dict(item) for item in result.to_dict('records')]
+
+    def _clean_dict(self, item):
+        """Helper method to convert NaN/None values to None (which becomes null in JSON)"""
+        cleaned = {}
+        for key, value in item.items():
+            if pd.isna(value):
+                cleaned[key] = None
+            else:
+                cleaned[key] = value
+        return cleaned

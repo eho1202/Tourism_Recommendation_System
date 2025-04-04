@@ -20,10 +20,28 @@ recommendations_router = APIRouter(
 async def fetch_user_recommendations(request: Request, request_body: RecommendationsRequest):
     hybrid = request.app.state.recommender
     recommendations = await hybrid.get_recommendations(request_body.userId, request_body.userInput, request_body.n)
-    recommendations_dict = [RecommendationsModel(**rec) for rec in recommendations]
-    if not recommendations_dict:
-        raise HTTPException(status_code=404, detail="No recommendations found")
-    return recommendations_dict
+    
+    # Enrich recommendations with missing fields from location_collection
+    enhanced_recommendations = []
+    for recommendation in recommendations:
+        # Assuming name can be used to find the location in the collection
+        # You might need to adjust the query based on your actual data structure
+        location_data = await location_db.get_location_by_name(recommendation["name"])
+        
+        if location_data:
+            # Add the required fields from the location data
+            if "locationId" not in recommendation and "locationId" in location_data:
+                recommendation["locationId"] = location_data["locationId"]
+                
+            if "address" not in recommendation and "address" in location_data:
+                recommendation["address"] = location_data["address"]
+            elif "address" not in recommendation:
+                # Set a placeholder address if it doesn't exist
+                recommendation["address"] = f"Address in {recommendation.get('city', 'Unknown City')}"
+        
+        enhanced_recommendations.append(recommendation)
+    
+    return enhanced_recommendations
 
 @recommendations_router.get("/ratings/user", response_model=List[RatingModel])
 async def fetch_user_explicit_ratings(user_id: int):

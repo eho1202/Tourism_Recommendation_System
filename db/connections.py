@@ -66,17 +66,17 @@ class ConnectionManager:
             self.location_client.close()
         logger.info("   MongoDB connections closed")
     
-    def get_user_db(self) -> motor.AsyncIOMotorDatabase:
+    def get_user_db(self):
         if self.user_db is None:
             raise RuntimeError("User database not initialized")
         return self.user_db
     
-    def get_recommender_db(self) -> motor.AsyncIOMotorDatabase:
+    def get_recommender_db(self):
         if self.recommender_db is None:
             raise RuntimeError("Recommender database not initialized")
         return self.recommender_db
     
-    def get_location_db(self) -> motor.AsyncIOMotorDatabase:
+    def get_location_db(self):
         if self.location_db is None:
             raise RuntimeError("Location database not initialized")
         return self.location_db

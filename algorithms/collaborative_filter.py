@@ -45,6 +45,9 @@ class CollaborativeFilter:
             tourism_data['description'] = tourism_data['description'].fillna('')
             
             self.tourism_data = tourism_data
+            self.tourism_data = self.tourism_data.apply(
+                lambda col: col.fillna('') if col.dtype == 'object' else col.fillna(0)
+            )
             logger.info("   Tourism data loaded successfully from database.")
             return tourism_data
         except Exception as e:
@@ -169,4 +172,3 @@ class CollaborativeFilter:
 # recommendations = get_item_recommendations(item_id, 5)
 # print("Top 5 item-based recommendations for item", item_id, ":")
 # print(recommendations)
-

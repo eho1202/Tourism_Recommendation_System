@@ -12,7 +12,7 @@ locations_router = APIRouter(
 
 location_db = LocationCommands()
 
-@locations_router.get("/locationId", response_model=LocationModel)
+@locations_router.get("/id", response_model=LocationModel)
 async def fetch_location_by_id(locationId: int):
     location_detail = await location_db.get_location_by_id(locationId)
     if location_detail is None:

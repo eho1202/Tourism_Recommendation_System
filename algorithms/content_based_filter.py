@@ -62,6 +62,10 @@ class ContentBasedFilter:
             # Load from MongoDB instead of CSV
             self.tourism_data = await self.load_tourism_data()
             
+            self.tourism_data = self.tourism_data.apply(
+                lambda col: col.fillna('') if col.dtype == 'object' else col.fillna(0)
+            )
+            
             # Single TF-IDF initialization for metadata
             self.tfidf = TfidfVectorizer(stop_words='english')
             self.tourism_data['metadata'] = (
@@ -85,15 +89,16 @@ class ContentBasedFilter:
         if self.tourism_data is None:
             raise HTTPException(status_code=500, detail="Tourism data not loaded")
         return recommendations[
-            recommendations['country'].str.contains(location, case=False, na=False)
+            recommendations['country'].str.contains(location, case=False, na=False) |
+            recommendations['city'].str.contains(location, case=False, na=False)
         ]
 
     def filter_by_keyword(self, recommendations, keyword):
         if self.tourism_data is None:
             raise HTTPException(status_code=500, detail="Tourism data not loaded")
         return recommendations[
-            recommendations['name'].str.contains(keyword, case=False, na=False) |
             recommendations['category'].str.contains(keyword, case=False, na=False) |
+            recommendations['name'].str.contains(keyword, case=False, na=False) |
             recommendations['description'].str.contains(keyword, case=False, na=False)
         ]
 
