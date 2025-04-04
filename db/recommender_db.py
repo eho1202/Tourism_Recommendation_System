@@ -47,7 +47,8 @@ class RecommenderCommands:
         rating_dict = new_rating.model_dump()
         result = await self.ratings_collection.update_one(
             {"userId": rating_dict["userId"], "locationId": rating_dict["locationId"]},
-            {"$set": rating_dict}
+            {"$set": rating_dict},
+            upsert=True
         )
 
         # Check if the update was successful
