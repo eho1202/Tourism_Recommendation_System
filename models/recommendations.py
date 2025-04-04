@@ -20,7 +20,7 @@ class RecommendationsModel(BaseModel):
     city: str
     country: str
     description: str
-    itemRating: Optional[float] = None
+    rating: Optional[float] = None
 
 class PreferencesModel(BaseModel):
     userId: int
