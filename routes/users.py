@@ -40,7 +40,7 @@ async def login(user: LoginRequestModel):
     if not is_user_exist or not pwd_context.verify(user.password, is_user_exist['password']):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     access_token = create_access_token(data={"sub": user.email})
-    return {'access_token': access_token, 'token_type': 'bearer'}
+    return {'access_token': access_token, 'token_type': 'bearer', 'user_id': is_user_exist['userId']}
     
 @users_router.post("/auth/register")
 async def register_user(user: RegisterRequestModel):
