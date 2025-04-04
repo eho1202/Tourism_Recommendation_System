@@ -99,7 +99,7 @@ class HybridFilter:
                 
                 logger.info(f"  Top rated items from cluster {cluster}: {top_items}")
                 
-                return self.tourism_data[self.tourism_data['itemId'].isin(top_items.index)].to_dict('records')
+                return self.tourism_data[self.tourism_data['locationId'].isin(top_items.index)].to_dict('records')
 
             elif user_ratings_count > 15:
                 # Item-based collaborative filtering for Users with > 15 ratings
@@ -120,4 +120,4 @@ class HybridFilter:
                         .mean()
                         .sort_values(ascending=False)
                         .head(n))
-        return self.tourism_data[self.tourism_data['itemId'].isin(popular_items.index)].to_dict('records')
+        return self.tourism_data[self.tourism_data['locationId'].isin(popular_items.index)].to_dict('records')

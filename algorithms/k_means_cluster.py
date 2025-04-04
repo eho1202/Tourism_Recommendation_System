@@ -30,7 +30,7 @@ class UserClusterer:
     
     async def load_users_data(self) -> pd.DataFrame:
         """Load user data from database and flatten profile structure"""
-        users_cursor = self.user_db.get_105_users()
+        users_cursor = self.user_db.get_all_users()
         users_list = await users_cursor.to_list(length=None)
         
         if not users_list:
@@ -54,7 +54,7 @@ class UserClusterer:
             self.preprocessor = load(self.MODEL_PATH / 'feature_pipeline.joblib')
             self.kmeans = load(self.MODEL_PATH / 'cluster_model.joblib')
             self.models_loaded = True
-            logger.info("Loaded existing clustering models")
+            logger.info("   Loaded existing clustering models")
         except FileNotFoundError:
             logger.info("No existing models found. Creating new ones...")
             self.create_and_save_models()
