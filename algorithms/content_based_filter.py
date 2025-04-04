@@ -7,7 +7,6 @@ from fastapi import HTTPException
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# from .datasets.load_data import load_csv  # Remove this import
 from db import LocationCommands
 
 logging.basicConfig(level=logging.INFO)
@@ -125,7 +124,8 @@ class ContentBasedFilter:
                 sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:n+1]  # Exclude the input item itself
                 place_indices = [i[0] for i in sim_scores]
                 
-                recommendations = self.tourism_data.iloc[place_indices][['name', 'category', 'country', 'city', 'itemRating']]
+                recommendations = self.tourism_data.iloc[place_indices][['name', 'category', 'country', 'city', 'rating', 'description']]
+                recommendations['keywords'] = recommendations['description'].apply(self.extract_keywords)
             else:
                 # If the input is not an exact location name, treat it as a keyword
                 recommendations = self.tourism_data.copy()

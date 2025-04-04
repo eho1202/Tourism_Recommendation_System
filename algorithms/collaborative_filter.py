@@ -83,7 +83,7 @@ class CollaborativeFilter:
                     return []  # Return an empty list if no item is found
                 item_id = item_id[0]  # Get the first matching item ID
                 item_recommendations = self.get_item_recommendations(item_id, n)  # Returns a list of item IDs
-                recommendations = self.tourism_data[self.tourism_data['locationId'].isin(item_recommendations)][['name', 'category', 'country', 'description', 'itemRating']]
+                recommendations = self.tourism_data[self.tourism_data['locationId'].isin(item_recommendations)][['name', 'category', 'country', 'city', 'description', 'rating']]
             else:
                 # If the user does not search for an item, recommend top-rated items based on their rating history
                 user_items = self.ratings[self.ratings['userId'] == user_id]['itemId']
