@@ -73,4 +73,4 @@ async def fetch_destination_ratings(location_id: int):
         raise HTTPException(status_code=404, detail="No ratings found")
     avg_rating = sum(rating['rating'] for rating in ratings) / len(ratings) if ratings else 0
     total_ratings = len(ratings)
-    return {"average_rating": avg_rating, "total_ratings": total_ratings, "ratings": ratings}
+    return {"avgRating": avg_rating, "totalRatings": total_ratings, "ratings": ratings}
