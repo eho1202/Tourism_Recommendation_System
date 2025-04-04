@@ -20,4 +20,13 @@ class LocationCommands:
         return locations
     
     async def get_location_by_id(self, location_id):
-        return await self.locations_collection.find_one({'locationId': location_id}, {'_id': 0})
+        location = await self.locations_collection.find_one({'locationId': location_id}, {'_id': 0})
+        
+        if location:
+            return {key: value.title() if isinstance(value, str) else value for key, value in location.items()}
+    
+    async def get_location_by_name(self, location_name):
+        location = await self.locations_collection.find_one({"name": {"$regex": location_name, "$options": "i"}}, {'_id': 0})
+        
+        if location:
+            return {key: value.title() if isinstance(value, str) else value for key, value in location.items()}

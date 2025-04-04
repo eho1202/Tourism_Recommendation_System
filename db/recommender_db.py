@@ -76,3 +76,13 @@ class RecommenderCommands:
             raise HTTPException(status_code=500, detail="Failed to add user preferences")
         return result
         
+    async def get_location_ratings(self, locationId: int):
+        ratings = []
+        try:
+            cursor = self.ratings_collection.find({'itemId': locationId}, {'_id': 0})
+            async for document in cursor:
+                ratings.append(document)
+        except Exception as e:
+            print(f'Error retrieving user ratings: {e}')
+            raise
+        return ratings
