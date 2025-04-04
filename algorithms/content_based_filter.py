@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from .datasets.load_data import load_csv
+# from .datasets.load_data import load_csv  # Remove this import
 from db import LocationCommands
 
 logging.basicConfig(level=logging.INFO)
@@ -31,20 +31,24 @@ class ContentBasedFilter:
         except:
             self.train_and_save_model()
             
-    # Load the tourism dataset
-    def load_tourism_data(self):
+    # Load the tourism dataset from MongoDB
+    async def load_tourism_data(self):
         try:
-            logger.info("   Loading tourism data...")
-            tourism_data = load_csv("tourist_destinations.csv")
+            logger.info("   Loading tourism data from database...")
+            # Get locations from MongoDB
+            locations_list = await self.locations_db.get_locations()
+            
+            # Convert to DataFrame
+            tourism_data = pd.DataFrame(locations_list)
             
             # Fill missing values in 'description' and 'category'
             tourism_data['category'] = tourism_data['category'].fillna('')
             tourism_data['description'] = tourism_data['description'].fillna('')
             
-            logger.info("   Tourism data loaded successfully.")
+            logger.info("   Tourism data loaded successfully from database.")
             return tourism_data
         except Exception as e:
-            logger.error(f" Failed to load tourism data: {e}")
+            logger.error(f" Failed to load tourism data from database: {e}")
             raise HTTPException(status_code=500, detail=f"Failed to load tourism data: {e}")
 
     # Function to extract keywords from description
@@ -54,10 +58,10 @@ class ContentBasedFilter:
         return ', '.join([word for word in text.split() if word in self.keywords_list])
 
     async def initialize(self):
-        """Initialize fresh model"""
+        """Initialize fresh model with database data"""
         try:
-            # TODO: Upate this to load data from MongoDB (await get_locations())
-            self.tourism_data = self.load_tourism_data()
+            # Load from MongoDB instead of CSV
+            self.tourism_data = await self.load_tourism_data()
             
             # Single TF-IDF initialization for metadata
             self.tfidf = TfidfVectorizer(stop_words='english')
@@ -73,7 +77,7 @@ class ContentBasedFilter:
             self.tourism_data = self.tourism_data.reset_index()
             self.indices = pd.Series(self.tourism_data.index, index=self.tourism_data['name'])
             
-            logger.info("   Content-based filtering module initialized")
+            logger.info("   Content-based filtering module initialized with database data")
         except Exception as e:
             logger.error(f"Initialization failed: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Initialization failed: {str(e)}")

@@ -51,7 +51,7 @@ class ConnectionManager:
             
             self.user_db = self.user_client["users_db"]
             self.recommender_db = self.user_client["recommender_system"]
-            self.location_db = self.location_client["locationData"]
+            self.location_db = self.location_client["LocationData"]
             
             logger.info("   Successfully connected to MongoDB")
         except Exception as e:

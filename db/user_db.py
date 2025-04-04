@@ -14,7 +14,7 @@ class UserCommands:
 
     def get_105_users(self):
         """Grabs the first 105 users for clustering"""
-        users = self.users_collection.find({'userId': {'$gte': 0, '$lte': 99}}, {'_id': 0})
+        users = self.users_collection.find({'userId': {'$gte': 0, '$lte': 104}}, {'_id': 0})
         return users
     
     def get_all_users(self):

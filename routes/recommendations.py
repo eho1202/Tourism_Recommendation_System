@@ -18,7 +18,10 @@ recommendations_router = APIRouter(
 async def fetch_user_recommendations(request: Request, request_body: RecommendationsRequest):
     hybrid = request.app.state.recommender
     recommendations = await hybrid.get_recommendations(request_body.userId, request_body.userInput, request_body.n)
-    return recommendations
+    recommendations_dict = [RecommendationsModel(**rec) for rec in recommendations]
+    if not recommendations_dict:
+        raise HTTPException(status_code=404, detail="No recommendations found")
+    return recommendations_dict
 
 @recommendations_router.get("/ratings", response_model=List[RatingModel])
 async def fetch_user_explicit_ratings(user_id: int):

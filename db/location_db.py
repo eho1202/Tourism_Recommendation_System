@@ -1,4 +1,3 @@
-# TODO: Add connection to location database
 from typing import Optional
 
 from db.connections import ConnectionManager
@@ -20,5 +19,5 @@ class LocationCommands:
             raise
         return locations
     
-    async def get_location_by_id(self, location_id: int):
+    async def get_location_by_id(self, location_id):
         return await self.locations_collection.find_one({'locationId': location_id}, {'_id': 0})

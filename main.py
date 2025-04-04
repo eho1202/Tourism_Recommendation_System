@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routes import recommendations_router, users_router
+from routes import recommendations_router, users_router, locations_router
 from algorithms.collaborative_filter import CollaborativeFilter
 from algorithms.content_based_filter import ContentBasedFilter
 from algorithms.hybrid_filter import HybridFilter
@@ -37,3 +37,4 @@ app.add_middleware(
 
 app.include_router(recommendations_router)
 app.include_router(users_router)
+app.include_router(locations_router)

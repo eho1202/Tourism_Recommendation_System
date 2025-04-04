@@ -6,8 +6,8 @@ from fastapi import HTTPException
 from algorithms.collaborative_filter import CollaborativeFilter
 from algorithms.content_based_filter import ContentBasedFilter
 from algorithms.k_means_cluster import UserClusterer
-from .datasets.load_data import load_csv
-from db import UserCommands, RecommenderCommands
+# from .datasets.load_data import load_csv  # Remove this import
+from db import UserCommands, RecommenderCommands, LocationCommands
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -17,8 +17,9 @@ class HybridFilter:
     def __init__(self):
         self.user_db = UserCommands()
         self.recommender_db = RecommenderCommands()
+        self.locations_db = LocationCommands()
         self.ratings = pd.DataFrame()
-        self.tourism_data = load_csv("tourist_destinations.csv")
+        self.tourism_data = pd.DataFrame()
         
         self.clusterer = None
         self.cf = None
@@ -29,16 +30,37 @@ class HybridFilter:
         self.cf = CollaborativeFilter()
         self.cb = ContentBasedFilter()
         
+        # Initialize components
         await self.clusterer.initialize()
         await self.cf.initialize_data_and_model()
         await self.cb.initialize_data_and_model()
+        
+        # Load data
         await self.fetch_and_process_ratings()
+        await self.load_tourism_data()
         
         logger.info("   Hybrid filter initialized.")
         
     async def fetch_and_process_ratings(self):
         ratings_from_mongodb = pd.DataFrame(await self.recommender_db.get_ratings())
         self.ratings = pd.DataFrame(ratings_from_mongodb)
+    
+    async def load_tourism_data(self):
+        """
+        Load tourism data from MongoDB locations collection.
+        """
+        try:
+            logger.info("   Loading tourism data from database...")
+            # Get locations from MongoDB
+            locations_list = await self.locations_db.get_locations()
+            
+            # Convert to DataFrame
+            self.tourism_data = pd.DataFrame(locations_list)
+            
+            logger.info("   Tourism data loaded successfully from database.")
+        except Exception as e:
+            logger.error(f" Failed to load tourism data from database: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to load tourism data: {e}")
 
     async def get_recommendations(self, user_id, user_input=None, n=10):
         try:
@@ -48,7 +70,7 @@ class HybridFilter:
                     return self.get_popular_items(n)
                 return await self.cb.get_content_recommendations(user_input, n)
             
-            user_data = await self.user_db.get_user_id(user_id)
+            user_data = await self.user_db.get_user_by_id(user_id)
             if user_data is None:
                 raise HTTPException(status_code=400, detail="User data is not available for the given user_id.")
 
@@ -99,10 +121,3 @@ class HybridFilter:
                         .sort_values(ascending=False)
                         .head(n))
         return self.tourism_data[self.tourism_data['itemId'].isin(popular_items.index)].to_dict('records')
-    
-    
-    
-# Example usage
-# print("Recommendations for userId=45:",get_recommendations(userId=45, item_name='London Eye', n=5)) # Should use cb
-# print("Recommendations for userId=59:", get_recommendations(userId=59, n=5)) # Should use cf
-# print("Recommendations for userId=199",get_recommendations(userId=199, n=5)) # Should cluster first then cb

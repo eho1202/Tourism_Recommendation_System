@@ -13,10 +13,15 @@ class RecommendationsRequest(BaseModel):
     n: int = 10
 
 class RecommendationsModel(BaseModel):
+    locationId: int
     name: str
     category: str
+    address: str
+    city: str
     country: str
-    itemRating: float
+    description: str
+    
+    # itemRating: Optional[float] = None
 
 class PreferencesModel(BaseModel):
     userId: int

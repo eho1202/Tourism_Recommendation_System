@@ -5,8 +5,8 @@ from surprise import Reader, Dataset, KNNBasic
 from pathlib import Path
 import logging
 
-from db import RecommenderCommands
-from .datasets.load_data import load_csv
+from db import RecommenderCommands, LocationCommands
+# from .datasets.load_data import load_csv  # We won't need this anymore
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 class CollaborativeFilter:
     def __init__(self):
         self.recommender_db = RecommenderCommands()
+        self.locations_db = LocationCommands()
         self.MODEL_PATH = Path(__file__).parent / "collaborative_filter_model.pkl"
         self.reader = Reader(rating_scale=(1, 5))
         self.sim_options = {'name': 'cosine', 'user_based': False}  # Item-based CF
@@ -24,30 +25,35 @@ class CollaborativeFilter:
     # main.py calls this 
     async def initialize_data_and_model(self):
         await self.fetch_and_process_ratings()
+        await self.load_tourism_data()
         self.load_model()
 
-    def load_tourism_data(self):
+    async def load_tourism_data(self):
         """
-        Load tourism data from a CSV file or another source.
+        Load tourism data from MongoDB locations collection.
         """
         try:
-            logger.info("   Loading tourism data...")
-            tourism_data = load_csv("tourist_destinations.csv")
+            logger.info("   Loading tourism data from database...")
+            # Get locations from MongoDB
+            locations_list = await self.locations_db.get_locations()
+            
+            # Convert to DataFrame
+            tourism_data = pd.DataFrame(locations_list)
             
             # Fill missing values in 'description' and 'category'
             tourism_data['category'] = tourism_data['category'].fillna('')
             tourism_data['description'] = tourism_data['description'].fillna('')
             
-            logger.info("   Tourism data loaded successfully.")
+            self.tourism_data = tourism_data
+            logger.info("   Tourism data loaded successfully from database.")
             return tourism_data
         except Exception as e:
-            logger.error(f" Failed to load tourism data: {e}")
-            raise HTTPException(status_code=500, detail=f"  Failed to load tourism data: {e}")
+            logger.error(f" Failed to load tourism data from database: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to load tourism data: {e}")
 
     # Load ratings data into Surprise Dataset
     async def fetch_and_process_ratings(self):
         self.ratings = pd.DataFrame(await self.recommender_db.get_ratings())
-        self.tourism_data = self.load_tourism_data()
 
     def filter_by_location(self, recommendations, location):
         return recommendations[
@@ -71,13 +77,13 @@ class CollaborativeFilter:
         try:
             if user_input and self.is_location_name(user_input):
                 # If the user searches for an item, use item-based collaborative filtering
-                item_id = self.tourism_data.loc[self.tourism_data['name'].str.lower() == user_input.lower(), 'itemId'].values # type: ignore
+                item_id = self.tourism_data.loc[self.tourism_data['name'].str.lower() == user_input.lower(), 'locationId'].values
                 if len(item_id) == 0:
                     logger.warning(f"No item found with name '{user_input}'.")
                     return []  # Return an empty list if no item is found
                 item_id = item_id[0]  # Get the first matching item ID
                 item_recommendations = self.get_item_recommendations(item_id, n)  # Returns a list of item IDs
-                recommendations = self.tourism_data[self.tourism_data['itemId'].isin(item_recommendations)][['name', 'category', 'country', 'description', 'itemRating']]
+                recommendations = self.tourism_data[self.tourism_data['locationId'].isin(item_recommendations)][['name', 'category', 'country', 'description', 'itemRating']]
             else:
                 # If the user does not search for an item, recommend top-rated items based on their rating history
                 user_items = self.ratings[self.ratings['userId'] == user_id]['itemId']
@@ -92,7 +98,7 @@ class CollaborativeFilter:
                 unique_recommendations = list(set(all_recommendations) - set(user_items))
                 
                 # Get details for the recommended items
-                recommendations = self.tourism_data[self.tourism_data['itemId'].isin(unique_recommendations)][['name', 'category', 'country', 'description', 'itemRating']]
+                recommendations = self.tourism_data[self.tourism_data['locationId'].isin(unique_recommendations)][['name', 'category', 'city', 'country', 'description']]
 
             # Apply location-based filtering if the input is a location
             if user_input and self.is_country(user_input):
