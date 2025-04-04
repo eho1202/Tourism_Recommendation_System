@@ -1,11 +1,13 @@
 from fastapi import APIRouter, HTTPException, Query, Request
+from pydantic import ValidationError, validate_call
 from typing import List, Optional
 
-from db.recommender_db import RecommenderCommands
+from db import RecommenderCommands, LocationCommands
 from models.recommendations import RatingModel, RecommendationsModel, RecommendationsRequest
 from algorithms import HybridFilter
 
 recommender_db = RecommenderCommands()
+location_db = LocationCommands()
 hybrid = HybridFilter()
 
 recommendations_router = APIRouter(

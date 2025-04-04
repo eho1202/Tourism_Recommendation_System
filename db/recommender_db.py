@@ -46,7 +46,7 @@ class RecommenderCommands:
     async def update_user_rating(self, new_rating: RatingModel):
         rating_dict = new_rating.model_dump()
         result = await self.ratings_collection.update_one(
-            {"userId": rating_dict["userId"], "itemId": rating_dict["itemId"]},
+            {"userId": rating_dict["userId"], "locationId": rating_dict["locationId"]},
             {"$set": rating_dict}
         )
 
@@ -57,7 +57,7 @@ class RecommenderCommands:
         return {"message": "Rating updated successfully."}
     
     async def delete_user_rating(self, user_id: int, item_id: int):
-        is_rating_exist = await self.ratings_collection.find_one({"userId": user_id, "itemId": item_id})
+        is_rating_exist = await self.ratings_collection.find_one({"userId": user_id, "locationId": item_id})
         
         if not is_rating_exist:
             raise HTTPException(status_code=404, detail="Could not find rating")
@@ -79,7 +79,7 @@ class RecommenderCommands:
     async def get_location_ratings(self, locationId: int):
         ratings = []
         try:
-            cursor = self.ratings_collection.find({'itemId': locationId}, {'_id': 0})
+            cursor = self.ratings_collection.find({'locationId': locationId}, {'_id': 0})
             async for document in cursor:
                 ratings.append(document)
         except Exception as e:

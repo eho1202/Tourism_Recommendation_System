@@ -92,7 +92,7 @@ class HybridFilter:
                     logger.warning(f"   No ratings found for cluster {cluster}. Using content-based fallback")
                     return await self.cb.get_content_recommendations(user_input, n)
                     
-                top_items = (cluster_ratings.groupby('itemId')['rating']
+                top_items = (cluster_ratings.groupby('locationId')['rating']
                             .mean()
                             .sort_values(ascending=False)
                             .head(n))
@@ -116,7 +116,7 @@ class HybridFilter:
         if self.ratings.empty:
             return self.tourism_data.head(n).to_dict('records')
             
-        popular_items = (self.ratings.groupby('itemId')['rating']
+        popular_items = (self.ratings.groupby('locationId')['rating']
                         .mean()
                         .sort_values(ascending=False)
                         .head(n))

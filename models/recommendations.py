@@ -1,10 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+import math
 from typing import List, Optional
 from datetime import datetime
 
 class RatingModel(BaseModel):
     userId: int
-    itemId: int
+    locationId: int
     rating: int
     
 class RecommendationsRequest(BaseModel):

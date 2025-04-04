@@ -86,7 +86,7 @@ class CollaborativeFilter:
                 recommendations = self.tourism_data[self.tourism_data['locationId'].isin(item_recommendations)][['name', 'category', 'country', 'city', 'description', 'rating']]
             else:
                 # If the user does not search for an item, recommend top-rated items based on their rating history
-                user_items = self.ratings[self.ratings['userId'] == user_id]['itemId']
+                user_items = self.ratings[self.ratings['userId'] == user_id]['locationId']
                 
                 # Get recommendations for each item rated by the user
                 all_recommendations = []
@@ -142,7 +142,7 @@ class CollaborativeFilter:
             logger.info("   Training the collaborative filtering model...")
             
             # Train the model
-            data = Dataset.load_from_df(self.ratings[['userId', 'itemId', 'rating']].copy(), self.reader)
+            data = Dataset.load_from_df(self.ratings[['userId', 'locationId', 'rating']].copy(), self.reader)
             trainset = data.build_full_trainset()
             self.algo.fit(trainset)
             
