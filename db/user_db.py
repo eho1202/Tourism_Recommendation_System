@@ -46,14 +46,32 @@ class UserCommands:
 
     async def add_user(self, user: UserModel):
         user_dict = user.model_dump(exclude_unset=True)
+        
         result = await self.users_collection.insert_one(user_dict)
         if result.inserted_id is None:
             raise HTTPException(status_code=500, detail="Failed to add user")
         
-        # Return the user with the new _id
-        created_user = await self.users_collection.find_one({"userId": result.inserted_id})
-        if created_user:
-            created_user["userId"] = str(created_user["userId"])
+        last_user_id = await self.users_collection.find_one({}, sort=[("userId", -1)], projection={"userId": 1, "_id": 0})
+        new_user_id = last_user_id["userId"] + 1 if last_user_id else None
+        
+        # Prepare user data with the new userId
+        user_dict = user.model_dump(exclude_unset=True)
+        user_dict["userId"] = new_user_id
+        
+        # Insert the new user
+        result = await self.users_collection.insert_one(user_dict)
+        if not result.acknowledged:
+            raise HTTPException(status_code=500, detail="Failed to add user")
+        
+        # Return the created user (without _id)
+        created_user = await self.users_collection.find_one(
+            {"userId": new_user_id},
+            projection={"_id": 0}  # Explicitly exclude _id
+        )
+        
+        if not created_user:
+            raise HTTPException(status_code=500, detail="Failed to retrieve created user")
+        
         return created_user
     
     async def update_credentials(self, user_id: int, credentials_data: dict):
