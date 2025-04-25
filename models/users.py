@@ -24,7 +24,7 @@ class ProfileModel(BaseModel):
     ageGroup: Optional[int] = None
     location: Optional[str] = None
     # address: Optional[AddressModel] = None
-    occupation: Optional[str] = None
+    job: Optional[str] = None
 
 class UserModel(BaseModel):
     email: EmailStr
@@ -65,7 +65,7 @@ class ProfileUpdateModel(BaseModel):
     ageGroup: Optional[int] = None
     # address: Optional[AddressModel] = None
     location: Optional[str] = None
-    occupation: Optional[str] = None
+    job: Optional[str] = None
 
 class UserResponseModel(BaseModel):
     userId: int

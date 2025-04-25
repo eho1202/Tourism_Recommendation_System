@@ -73,7 +73,7 @@ async def register_user(user: RegisterRequestModel):
             ageGroup=None,
             location=None,
             # address=None,
-            occupation=None,   
+            job=None,   
         ),
         preferences=None,
         favourites=None,
