@@ -88,8 +88,8 @@ async def register_user(user: RegisterRequestModel):
     return confirm_user
 
 @users_router.get("/get-user-details", response_model=UserModel)
-async def get_user_info(user_id: int):
-    user_data = await user_db.get_user_by_id(user_id)
+async def get_user_info(userId: int):
+    user_data = await user_db.get_user_by_id(userId)
     if user_data is None:
         raise HTTPException(status_code=404, detail="User not found")
     
@@ -126,26 +126,25 @@ async def update_user_details(profile: ProfileUpdateModel):
     existing_user = await user_db.get_user_by_id(profile.userId)
     if not existing_user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    # Prepare update data
-    update_data = profile.model_dump(exclude_unset=True, exclude_none=True, exclude={"_id"})
-    
-    if "location" in update_data and update_data["location"]:
-        update_data["location"] = update_data["location"].model_dump(exclude_unset=True, exclude_none=True)
-        # Convert address model to dict
-        # if profile.location is not None:
-        #     update_data["address"] = profile.address.model_dump(exclude_unset=True, exclude_none=True)
-    
-    # Perform update
-    updated_user = await user_db.update_personal_details(user_id=profile.userId, profile_data=update_data)
-    
+
+    update_data = profile.model_dump(
+        exclude_unset=True,
+        exclude_none=True,
+        exclude={"userId", "_id"}
+    )
+
+    updated_user = await user_db.update_personal_details(
+        user_id=profile.userId,
+        profile_data=update_data
+    )
+
     if not updated_user:
         raise HTTPException(status_code=500, detail="Failed to update profile")
-    
-    # Ensure profile exists in response
-    if "profile" not in updated_user:
-        updated_user["profile"] = {}
-    
+
+    updated_user = updated_user or {}
+    updated_user.setdefault("profile", {})
+    updated_user["userId"] = profile.userId
+
     return UserResponseModel(**updated_user)
 
 @users_router.delete("/remove-user")

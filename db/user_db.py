@@ -72,30 +72,26 @@ class UserCommands:
         update_result = await self.users_collection.find_one_and_update({"userId": user_id}, {"$set": credentials_data}, return_document=ReturnDocument.AFTER)
         return update_result
 
-    async def update_personal_details(self, user_id: int, profile_data: dict):
-        current_user = await self.users_collection.find_one({"userId": user_id})
-        current_profile = current_user.get("profile", {}) if current_user else {}
-        
-        if "location" in profile_data:
-            current_location = current_profile.get("location", {})
-            merged_location = {**current_location, **profile_data["location"]}
-            profile_data["location"] = merged_location
-        
-        # if "address" in profile_data:
-        #     current_address = current_profile.get("address", {})
-        #     merged_address = {**current_address, **profile_data["address"]}
-        #     profile_data["address"] = merged_address
-        
-        # Merge existing profile with new updates
-        merged_profile = {**current_profile, **profile_data}
-        
-        # Perform the update
-        update_result = await self.users_collection.find_one_and_update(
+    async def update_personal_details(self, user_id: int, profile_data: dict) -> Optional[dict]:
+        """
+        Updates a user's profile with new data (atomic update).
+        Args:
+            user_id: The user's ID to update.
+            profile_data: Fields to update (e.g., {"location": "Canada", "job": "Engineer"}).
+        Returns:
+            The updated user document (without _id), or None if failed.
+        """
+        if not profile_data:  # No updates to apply
+            return None
+
+        # Atomic update (only modifies provided fields)
+        updated_user = await self.users_collection.find_one_and_update(
             {"userId": user_id},
-            {"$set": {"profile": merged_profile}},
-            return_document=ReturnDocument.AFTER
+            {"$set": {"profile": profile_data}},  # Overwrites only specified keys in profile
+            return_document=ReturnDocument.AFTER,
+            projection={"_id": 0}  # Exclude _id in response
         )
-        return update_result
+        return updated_user
 
     async def update_preferences(self, user_id: int, preferences: PreferencesModel):
         preferences_dict = preferences.model_dump(exclude={"userId"})

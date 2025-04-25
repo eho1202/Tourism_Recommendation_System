@@ -27,7 +27,7 @@ class ProfileModel(BaseModel):
     job: Optional[str] = None
 
 class UserModel(BaseModel):
-    userId: Optional[int] = None
+    userId: int
     email: EmailStr
     password: str
     profile: Optional[ProfileModel] = None
