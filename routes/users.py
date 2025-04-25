@@ -155,10 +155,10 @@ async def update_user_preferences(user_id: int, preferences: PreferencesModel):
     """Updates user's preferences
     
         Example request body:\n
-        Requires `_id`
+        Requires `userId`
         ```
         {
-            "_id": 0,
+            "userId": 0,
             "environments": [
                 "cold"
             ],
