@@ -27,7 +27,7 @@ class UserCommands:
         user_ids = []
         cursor = self.users_collection.find({'cluster': cluster}, {'_id': 0})
         async for document in cursor:
-            user_ids.append(document['_id'])
+            user_ids.append(document['userId'])
         return user_ids
     
     async def update_user_cluster(self, user_id, cluster):
