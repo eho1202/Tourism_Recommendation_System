@@ -16,12 +16,13 @@ class RecommendationsRequest(BaseModel):
 class RecommendationsModel(BaseModel):
     locationId: int
     name: str
-    category: str
+    category: Optional[List[str]] = None
     address: str
     city: str
     country: str
-    description: str
+    description: Optional[str] = None
     rating: Optional[float] = None
+    num_ratings: Optional[int] = None
 
 class PreferencesModel(BaseModel):
     userId: int
