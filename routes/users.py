@@ -44,39 +44,36 @@ async def login(user: LoginRequestModel):
     
 @users_router.post("/auth/register")
 async def register_user(user: RegisterRequestModel):
-    """_Register new users_
+    """Register new users
 
     Args:
-        user (RegisterRequestModel): Takes `userId`, `email`, and `password` as input
+        user (RegisterRequestModel): Takes `first name`, `last name`, `email` and `password` as input
 
     Raises:
-        HTTPException: status_code=`403`, detail=`User already exists`
+        HTTPException: status_code=403, detail=`User already exists`
 
     Returns:
-        _type_: _description_
+        The newly registered user
     """
     is_user_exist = await user_db.get_user_by_email(user.email)
     if is_user_exist is not None:
         raise HTTPException(status_code=403, detail="User already exists")
-    # Grab the userId of the last user
-    last_user = await user_db.get_last_user()
-    if last_user:
-        user.userId = last_user['userId'] + 1
     
     # Hash the password
     hashed_password = hash_password(user.password)
     
+    # Create new user with MongoDB's _id as the primary identifier
     new_user = UserModel(
-        userId=user.userId,
         email=user.email,
         password=hashed_password,
         profile=ProfileModel(
-            firstName=None,
-            lastName=None,
+            firstName=user.firstName,
+            lastName=user.lastName,
             gender=None,
             ageGroup=None,
             location=None,
-            job=None,   
+            # address=None,
+            occupation=None,   
         ),
         preferences=None,
         favourites=None,
@@ -128,7 +125,13 @@ async def update_user_details(profile: ProfileUpdateModel):
         raise HTTPException(status_code=404, detail="User not found")
     
     # Prepare update data
-    update_data = profile.model_dump(exclude_unset=True, exclude_none=True, exclude={"userId"})
+    update_data = profile.model_dump(exclude_unset=True, exclude_none=True, exclude={"_id"})
+    
+    if "location" in update_data and update_data["location"]:
+        update_data["location"] = update_data["location"].model_dump(exclude_unset=True, exclude_none=True)
+        # Convert address model to dict
+        # if profile.location is not None:
+        #     update_data["address"] = profile.address.model_dump(exclude_unset=True, exclude_none=True)
     
     # Perform update
     updated_user = await user_db.update_personal_details(user_id=profile.userId, profile_data=update_data)
@@ -152,10 +155,10 @@ async def update_user_preferences(user_id: int, preferences: PreferencesModel):
     """Updates user's preferences
     
         Example request body:\n
-        Requires `user_id`
+        Requires `_id`
         ```
         {
-            "userId": 0,
+            "_id": 0,
             "environments": [
                 "cold"
             ],

@@ -3,7 +3,7 @@ Software Engineering Capstone Project for Toronto Metropolitan University 2025
 
 ## Project Setup
 
-### Requires Python `3.11` or above to run
+### Requires Python `3.11` to run
 
 ### Python Virtual Env
 ``` 
@@ -27,6 +27,12 @@ $ python3 -m pip install -r requirements.txt
 
 # Windows
 py -m pip install -r requirements.txt
+```
+
+### There may be problems with installing lightfm, to fix the problems:
+```
+# Run this command
+$ pip install --upgrade pip setuptools wheel
 ```
 
 ## Running the API locally
