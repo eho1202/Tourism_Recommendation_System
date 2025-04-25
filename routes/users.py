@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 
 from db.recommender_db import RecommenderCommands
 from db.user_db import UserCommands
-from models.users import UserModel, CredentialsUpdateModel, UserResponseModel, LoginRequestModel, RegisterRequestModel, TripDetails, FavouritesRequestModel, ProfileModel, ProfileUpdateModel
+from models.users import UserModel, CredentialsUpdateModel, UserResponseModel, LoginRequestModel, RegisterRequestModel, TripDetailsModel, FavouritesRequestModel, ProfileModel, ProfileUpdateModel
 from models.recommendations import PreferencesModel
 
 users_router = APIRouter(
@@ -215,7 +215,7 @@ async def update_user_favourites(user_id: int, favourites: FavouritesRequestMode
     return {"message": "All operations completed successfully."}
 
 @users_router.post("/add-trip")
-async def add_user_trip(user_id: int, trip: TripDetails):
+async def add_user_trip(user_id: int, trip: TripDetailsModel):
     """Add user trip when user creates a trip
     
         Example request body:\n
@@ -237,7 +237,7 @@ async def add_user_trip(user_id: int, trip: TripDetails):
         
 
 @users_router.patch("/update-trip")
-async def update_user_trip(user_id: int, trip: TripDetails):
+async def update_user_trip(user_id: int, trip: TripDetailsModel):
     """Update user trip when user changes trip information
     
         Example request body:\n
