@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Dict
 from datetime import datetime
 
-class TripDetails(BaseModel):
+class TripDetailsModel(BaseModel):
     tripId: str
     name: Optional[str] = None
     destination: Optional[str] = None
@@ -33,7 +33,7 @@ class UserModel(BaseModel):
     profile: Optional[ProfileModel] = None
     preferences: Optional[Dict[str, List[str]]] = None
     favourites: Optional[List[str]] = None
-    savedTrips: Optional[Dict[str, TripDetails]] = None
+    savedTrips: Optional[Dict[str, TripDetailsModel]] = None
     cluster: Optional[int] = None
 
 class LoginRequestModel(BaseModel):
@@ -75,5 +75,5 @@ class UserResponseModel(BaseModel):
     profile: Optional[ProfileModel] = None
     interests: Optional[Dict[str, List[str]]] = None
     favourites: Optional[List[str]] = None
-    savedTrips: Optional[Dict[str, TripDetails]] = None
+    savedTrips: Optional[Dict[str, TripDetailsModel]] = None
     cluster: Optional[int] = None
