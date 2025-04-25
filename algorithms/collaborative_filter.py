@@ -1,12 +1,12 @@
 from fastapi import HTTPException
 import joblib
 import pandas as pd
+import numpy as np
 from surprise import Reader, Dataset, KNNBasic
 from pathlib import Path
 import logging
 
 from db import RecommenderCommands, LocationCommands
-# from .datasets.load_data import load_csv  # We won't need this anymore
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -41,13 +41,35 @@ class CollaborativeFilter:
             tourism_data = pd.DataFrame(locations_list)
             
             # Fill missing values in 'description' and 'category'
-            tourism_data['category'] = tourism_data['category'].fillna('')
+            # Process category field safely
+            def process_category(x):
+                # Handle scalar values
+                if isinstance(x, list):
+                    return x
+                if isinstance(x, str):
+                    return [x]
+                # Handle None or NaN as a scalar
+                if x is None or (isinstance(x, float) and np.isnan(x)):
+                    return []
+                # Handle unexpected types
+                try:
+                    return [] if pd.isna(x) else [str(x)]
+                except (TypeError, ValueError):
+                    return []
+                
+            # Update: Fill category with empty list instead of empty string
+            tourism_data['category'] = tourism_data['category'].apply(lambda x: process_category(x))
             tourism_data['description'] = tourism_data['description'].fillna('')
             
+            # Process other fields
+            for col in tourism_data.columns:
+                if col != 'category':
+                    if tourism_data[col].dtype == 'object':
+                        tourism_data[col] = tourism_data[col].fillna('')
+                    else:
+                        tourism_data[col] = tourism_data[col].fillna(0)
+            
             self.tourism_data = tourism_data
-            self.tourism_data = self.tourism_data.apply(
-                lambda col: col.fillna('') if col.dtype == 'object' else col.fillna(0)
-            )
             logger.info("   Tourism data loaded successfully from database.")
             return tourism_data
         except Exception as e:
@@ -64,11 +86,30 @@ class CollaborativeFilter:
         ]
 
     def filter_by_keyword(self, recommendations, keyword):
-        return recommendations[
+        # Updated to handle category as a list
+        keyword_lower = keyword.lower()
+        
+        # Filter for name and description (still strings)
+        name_description_mask = (
             recommendations['name'].str.contains(keyword, case=False, na=False) |
-            recommendations['category'].str.contains(keyword, case=False, na=False) |
             recommendations['description'].str.contains(keyword, case=False, na=False)
-        ]
+        )
+        
+        # Filter for category (now a list)
+        # Create a mask for items where any category element contains the keyword
+        def check_categories(cats):
+            if not isinstance(cats, list):
+                return False
+            if len(cats) == 0:
+                return False
+            # Explicitly handle each category as a string
+            return any(isinstance(cat, str) and keyword_lower in cat.lower() for cat in cats)
+        
+        # Use the safer category checking function
+        category_mask = recommendations['category'].apply(check_categories)
+        
+        # Combine masks - ensure we're dealing with boolean Series
+        return recommendations[name_description_mask | category_mask]
 
     def is_country(self, user_input):
         return self.tourism_data['country'].str.contains(user_input, case=False, na=False).any() 
@@ -109,12 +150,17 @@ class CollaborativeFilter:
 
             # Apply keyword-based filtering if the input is not a location or location name
             if user_input and not self.is_country(user_input) and not self.is_location_name(user_input):
-                keyword_filtered = self.filter_by_keyword(recommendations, user_input)
-                if not keyword_filtered.empty:  # Check if keyword filtering returned any results
-                    recommendations = keyword_filtered
-                else:
-                    logger.info(f"No results found for keyword '{user_input}'. Returning top-rated items.")
-                    recommendations = recommendations.head(n)  # Fallback to top-rated items
+                try:
+                    keyword_filtered = self.filter_by_keyword(recommendations, user_input)
+                    if not keyword_filtered.empty:  # Check if keyword filtering returned any results
+                        recommendations = keyword_filtered
+                    else:
+                        logger.info(f"No results found for keyword '{user_input}'. Returning top-rated items.")
+                        recommendations = recommendations.head(n)  # Fallback to top-rated items
+                except Exception as e:
+                    logger.error(f"Error in keyword filtering: {e}")
+                    # Fallback to returning unfiltered recommendations
+                    recommendations = recommendations.head(n)
 
             # Return the top n recommendations
             return recommendations.head(n).to_dict(orient="records")
@@ -167,8 +213,3 @@ class CollaborativeFilter:
         except Exception as e:
             logger.error(f" Failed to load model: {e}")
             raise HTTPException(status_code=500, detail=f"  Failed to load the model: {e}")
-
-# item_id = 8  # Replace with an actual item ID
-# recommendations = get_item_recommendations(item_id, 5)
-# print("Top 5 item-based recommendations for item", item_id, ":")
-# print(recommendations)

@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import logging
 import joblib
 import traceback
@@ -41,7 +42,24 @@ class ContentBasedFilter:
             tourism_data = pd.DataFrame(locations_list)
             
             # Fill missing values in 'description' and 'category'
-            tourism_data['category'] = tourism_data['category'].fillna('')
+            # Process category field safely
+            def process_category(x):
+                # Handle scalar values
+                if isinstance(x, list):
+                    return x
+                if isinstance(x, str):
+                    return [x]
+                # Handle None or NaN as a scalar
+                if x is None or (isinstance(x, float) and np.isnan(x)):
+                    return []
+                # Handle unexpected types
+                try:
+                    return [] if pd.isna(x) else [str(x)]
+                except (TypeError, ValueError):
+                    return []
+                
+            # Update: Handle category as a list
+            tourism_data['category'] = tourism_data['category'].apply(lambda x: process_category(x))
             tourism_data['description'] = tourism_data['description'].fillna('')
             
             logger.info("   Tourism data loaded successfully from database.")
@@ -56,6 +74,20 @@ class ContentBasedFilter:
             raise HTTPException(status_code=500, detail="Keywords list not initialized")
         return ', '.join([word for word in text.split() if word in self.keywords_list])
 
+    # Helper function to convert category list to string
+    def categories_to_string(self, categories):
+        """Convert a list of categories to a space-separated string"""
+        if not categories:
+            return ""
+        if isinstance(categories, list):
+            # Filter out any non-string elements
+            valid_categories = [cat for cat in categories if isinstance(cat, str)]
+            return " ".join(valid_categories)
+        if isinstance(categories, str):
+            return categories
+        # Default fallback
+        return ""
+
     async def initialize(self):
         """Initialize fresh model with database data"""
         try:
@@ -68,11 +100,21 @@ class ContentBasedFilter:
             
             # Single TF-IDF initialization for metadata
             self.tfidf = TfidfVectorizer(stop_words='english')
-            self.tourism_data['metadata'] = (
-                self.tourism_data['name'] + ' ' + 
-                self.tourism_data['category'] + ' ' + 
-                self.tourism_data['description']
-            )
+            
+            # Update: Convert category list to string for TF-IDF
+            # Process each field separately to handle any potential errors
+            name_col = self.tourism_data['name'].fillna('')
+            desc_col = self.tourism_data['description'].fillna('')
+            
+            # Safely convert categories to strings
+            cat_strings = self.tourism_data['category'].apply(self.categories_to_string)
+            
+            # Combine all fields into metadata
+            self.tourism_data['metadata'] = name_col + ' ' + cat_strings + ' ' + desc_col
+            
+            # Make sure metadata is always a string
+            self.tourism_data['metadata'] = self.tourism_data['metadata'].fillna('')
+            
             self.tfidf_matrix = self.tfidf.fit_transform(self.tourism_data['metadata'])
             self.keywords_list = self.tfidf.get_feature_names_out()
             
@@ -96,11 +138,30 @@ class ContentBasedFilter:
     def filter_by_keyword(self, recommendations, keyword):
         if self.tourism_data is None:
             raise HTTPException(status_code=500, detail="Tourism data not loaded")
-        return recommendations[
-            recommendations['category'].str.contains(keyword, case=False, na=False) |
+        
+        keyword_lower = keyword.lower()
+        
+        # Filter for name and description (still strings)
+        name_description_mask = (
             recommendations['name'].str.contains(keyword, case=False, na=False) |
             recommendations['description'].str.contains(keyword, case=False, na=False)
-        ]
+        )
+        
+        # Filter for category (now a list)
+        # Create a mask for items where any category element contains the keyword
+        def check_categories(cats):
+            if not isinstance(cats, list):
+                return False
+            if len(cats) == 0:
+                return False
+            # Explicitly handle each category as a string
+            return any(isinstance(cat, str) and keyword_lower in cat.lower() for cat in cats)
+        
+        # Use the safer category checking function
+        category_mask = recommendations['category'].apply(check_categories)
+        
+        # Combine masks - ensure we're dealing with boolean Series
+        return recommendations[name_description_mask | category_mask]
 
     def is_location(self, user_input):
         if self.tourism_data is None:

@@ -1,12 +1,12 @@
 import logging
 import traceback
 import pandas as pd
+import numpy as np
 from fastapi import HTTPException
 
 from algorithms.collaborative_filter import CollaborativeFilter
 from algorithms.content_based_filter import ContentBasedFilter
 from algorithms.k_means_cluster import UserClusterer
-# from .datasets.load_data import load_csv  # Remove this import
 from db import UserCommands, RecommenderCommands, LocationCommands
 
 logging.basicConfig(level=logging.INFO)
@@ -57,9 +57,32 @@ class HybridFilter:
             # Convert to DataFrame
             self.tourism_data = pd.DataFrame(locations_list)
             
-            self.tourism_data = self.tourism_data.apply(
-                lambda col: col.fillna('') if col.dtype == 'object' else col.fillna(0)
-            )
+            # Process category field safely
+            def process_category(x):
+                # Handle scalar values
+                if isinstance(x, list):
+                    return x
+                if isinstance(x, str):
+                    return [x]
+                # Handle None or NaN as a scalar
+                if x is None or (isinstance(x, float) and np.isnan(x)):
+                    return []
+                # Handle unexpected types
+                try:
+                    return [] if pd.isna(x) else [str(x)]
+                except (TypeError, ValueError):
+                    return []
+                
+            # Update: Handle category as a list
+            self.tourism_data['category'] = self.tourism_data['category'].apply(lambda x: process_category(x))
+            
+            # Process other fields
+            for col in self.tourism_data.columns:
+                if col != 'category':
+                    if self.tourism_data[col].dtype == 'object':
+                        self.tourism_data[col] = self.tourism_data[col].fillna('')
+                    else:
+                        self.tourism_data[col] = self.tourism_data[col].fillna(0)
             
             logger.info("   Tourism data loaded successfully from database.")
         except Exception as e:
@@ -145,6 +168,8 @@ class HybridFilter:
         for key, value in item.items():
             if pd.isna(value):
                 cleaned[key] = None
+            elif key == 'category' and not value:  # Empty list check for category
+                cleaned[key] = []
             else:
                 cleaned[key] = value
         return cleaned
