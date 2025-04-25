@@ -62,8 +62,11 @@ async def register_user(user: RegisterRequestModel):
     # Hash the password
     hashed_password = hash_password(user.password)
     
+    new_id = await user_db.get_new_user_id()
+    
     # Create new user with MongoDB's _id as the primary identifier
     new_user = UserModel(
+        userId=new_id,
         email=user.email,
         password=hashed_password,
         profile=ProfileModel(
