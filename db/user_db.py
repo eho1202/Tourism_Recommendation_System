@@ -103,11 +103,18 @@ class UserCommands:
         if operation_data["operation"] == "add":
             await self.users_collection.update_one(
                 {"userId": user_id},
-                {
-                    "$setOnInsert": {"favourites": [operation_data["place"]]},  # Initialize if doc doesn't exist
-                    "$addToSet": {"favourites": operation_data["place"]}        # Add if field exists
-                },
-                upsert=True  # Create document if it doesn't exist
+                [{
+                    "$set": {
+                        "favourites": {
+                            "$cond": [
+                                {"$ifNull": ["$favourites", False]},  # Check if field exists
+                                {"$setUnion": ["$favourites", [operation_data["place"]]]},  # Add to existing array
+                                [operation_data["place"]]  # Create new array if null/missing
+                            ]
+                        }
+                    }
+                }],
+                upsert=True  # Optional: create doc if doesn't exist
             )
         elif operation_data["operation"] == "remove":
             await self.users_collection.update_one(
