@@ -11,7 +11,7 @@ class RatingModel(BaseModel):
 class RecommendationsRequest(BaseModel):
     userId: Optional[int] = None
     userInput: Optional[str] = None
-    n: int = 10
+    n: int = 20
 
 class RecommendationsModel(BaseModel):
     locationId: int
